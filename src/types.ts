@@ -1,19 +1,18 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
-export interface MyQuery extends DataQuery {
-  queryText?: string;
-  constant: number;
+export interface SignalKQuery extends DataQuery {
+  path: string;
 }
 
-export const defaultQuery: Partial<MyQuery> = {
-  constant: 6.5,
+export const defaultQuery: Partial<SignalKQuery> = {
+  path: 'navigation.speedOverGround',
 };
 
 /**
  * These are options configured for each DataSource instance
  */
-export interface MyDataSourceOptions extends DataSourceJsonData {
-  path?: string;
+export interface SignalKDataSourceOptions extends DataSourceJsonData {
+  hostname?: string;
 }
 
 /**

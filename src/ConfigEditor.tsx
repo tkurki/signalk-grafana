@@ -1,18 +1,18 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 import { SecretFormField, FormField } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { MyDataSourceOptions, MySecureJsonData } from './types';
+import { SignalKDataSourceOptions, MySecureJsonData } from './types';
 
-interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions> {}
+interface Props extends DataSourcePluginOptionsEditorProps<SignalKDataSourceOptions> {}
 
 interface State {}
 
 export class ConfigEditor extends PureComponent<Props, State> {
-  onPathChange = (event: ChangeEvent<HTMLInputElement>) => {
+  onHostnameChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { onOptionsChange, options } = this.props;
     const jsonData = {
       ...options.jsonData,
-      path: event.target.value,
+      hostname: event.target.value,
     };
     onOptionsChange({ ...options, jsonData });
   };
@@ -52,12 +52,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
       <div className="gf-form-group">
         <div className="gf-form">
           <FormField
-            label="Path"
-            labelWidth={6}
+            label="Server address"
+            labelWidth={10}
             inputWidth={20}
-            onChange={this.onPathChange}
-            value={jsonData.path || ''}
-            placeholder="json field returned to frontend"
+            onChange={this.onHostnameChange}
+            value={jsonData.hostname || ''}
+            placeholder="Signal K server hostname/ip address"
           />
         </div>
 
@@ -68,7 +68,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               value={secureJsonData.apiKey || ''}
               label="API Key"
               placeholder="secure json field (backend only)"
-              labelWidth={6}
+              labelWidth={10}
               inputWidth={20}
               onReset={this.onResetAPIKey}
               onChange={this.onAPIKeyChange}

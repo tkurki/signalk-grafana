@@ -1,14 +1,16 @@
 import { DataQueryRequest, DataQueryResponse, DataSourceApi, DataSourceInstanceSettings, FieldType, CircularDataFrame } from '@grafana/data';
 
-import { MyQuery, MyDataSourceOptions } from './types';
+import { SignalKQuery, SignalKDataSourceOptions } from './types';
 import { Observable } from 'rxjs';
 
-export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
-  constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
+export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOptions> {
+  hostname: string
+  constructor(instanceSettings: DataSourceInstanceSettings<SignalKDataSourceOptions>) {
     super(instanceSettings);
+    this.hostname = instanceSettings.jsonData.hostname || ''
   }
 
-  query(options: DataQueryRequest<MyQuery>): Observable<DataQueryResponse> {
+  query(options: DataQueryRequest<SignalKQuery>): Observable<DataQueryResponse> {
     console.log(options);
 
     return new Observable<DataQueryResponse>(subscriber => {
@@ -30,14 +32,14 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         data.fields[1].values.add(value);
       };
 
-      const ws = new WebSocket('ws://demo.signalk.org/signalk/v1/stream');
+      const ws = new WebSocket(`ws://${this.hostname}/signalk/v1/stream`);
       ws.onmessage = event => {
         const msg = JSON.parse(event.data);
         msg.updates &&
           msg.updates.forEach((update: any) => {
             update.values &&
               update.values.forEach((pathValue: any) => {
-                if (pathValue.path === 'navigation.speedOverGround') {
+                if (pathValue.path === options.targets[0].path) {
                   pushNextEvent(pathValue.value);
                 }
               });
@@ -54,7 +56,6 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
 
 
       return () => {
-        console.log('unsubscribing to stream ' + streamId);
         ws.close();
       };
     });

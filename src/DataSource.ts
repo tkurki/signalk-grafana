@@ -70,9 +70,36 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
   }
 
   async testDatasource() {
-    return {
-      status: 'success',
-      message: 'Success',
-    };
+    return new Promise((resolve, reject) => {
+      const ws = new WebSocket(`ws://${this.hostname}/signalk/v1/stream?subscribe=none`);
+      ws.onmessage = event => {
+        try {
+          const msg = JSON.parse(event.data);
+          //per schema: "required": ["version","roles"]
+          if (msg.version && msg.roles) {
+            ws.close();
+            resolve({
+              status: 'success',
+              message: 'Success',
+            });
+            return;
+          }
+        } catch (e) {
+          console.error(e.message);
+        }
+        console.error(event);
+        reject({
+          status: 'failure',
+          message: 'Did not receive Signal K hello message',
+        });
+      };
+      ws.onerror = error => {
+        console.error(error)
+        reject({
+          status: 'failure',
+          message: `Could not open WebSocket`,
+        });
+      }
+    });
   }
 }

@@ -1,24 +1,33 @@
 {
+  "name": "Signal K Datasource",
+  "id": "signalk-datasource",
   "type": "datasource",
-  "name": "Simple Data Source",
-  "id": "myorgid-simple-datasource",
+  "partials": {
+    "config": "public/app/plugins/datasource/XXXX/partials/config.html"
+  },
   "metrics": true,
-
+  "annotations": false,
+  "alerting": false,
   "info": {
-    "description": "Simple Data Source",
+    "description": "Signal K datasource",
     "author": {
-      "name": "Your Name"
+      "name": "Teppo Kurki",
+      "url": "teppo.kurki@iki.fi"
     },
-    "keywords": ["Simple"],
     "logos": {
       "small": "img/logo.svg",
       "large": "img/logo.svg"
     },
     "links": [
-      { "name": "Website", "url": "https://github.com/grafana/simple-datasource" },
-      { "name": "License", "url": "https://github.com/grafana/simple-datasource/blob/master/LICENSE" }
+      {
+        "name": "GitHub",
+        "url": "https://github.com/"
+      },
+      {
+        "name": "Apache 2 License",
+        "url": "https://www.apache.org/licenses/LICENSE-2.0"
+      }
     ],
-    "screenshots": [],
     "version": "%VERSION%",
     "updated": "%TODAY%"
   },

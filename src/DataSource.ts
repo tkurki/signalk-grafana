@@ -4,8 +4,8 @@ import { SignalKQuery, SignalKDataSourceOptions } from './types';
 import { Observable } from 'rxjs';
 
 interface PathValue {
-  path: string
-  value: number
+  path: string;
+  value: number;
 }
 
 export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOptions> {
@@ -16,11 +16,10 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
   }
 
   query(options: DataQueryRequest<SignalKQuery>): Observable<DataQueryResponse> {
-
     return new Observable<DataQueryResponse>(subscriber => {
       const maxDataPoints = options.maxDataPoints || 1000;
 
-      const pathValueHandlers: ((pv:PathValue) => void)[] = options.targets.map((target, i) => {
+      const pathValueHandlers: ((pv: PathValue) => void)[] = options.targets.map((target, i) => {
         const data = new CircularDataFrame({
           append: 'tail',
           capacity: maxDataPoints,
@@ -58,7 +57,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
           msg.updates.forEach((update: any) => {
             update.values &&
               update.values.forEach((pathValue: any) => {
-                pathValueHandlers.forEach(pm => pm(pathValue))
+                pathValueHandlers.forEach(pm => pm(pathValue));
               });
           });
       };

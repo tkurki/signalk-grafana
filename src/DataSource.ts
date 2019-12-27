@@ -45,7 +45,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
 
         return (pathValue: PathValue) => {
           if (pathValue.path === target.path) {
-            pushNextEvent(pathValue.value, i);
+            pushNextEvent(pathValue.value);
           }
         };
       });

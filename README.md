@@ -3,7 +3,7 @@
 - [x] add server hostname to datasource config
 - [x] add path configuration to query editor
 - [x] fetch path list from server
-- [ ] add simple multiplier for unit conversion
+- [x] add simple multiplier for unit conversion
 - [ ] build Docker image
 - [ ] add proper unit conversion
 - [ ] add server port to datasource config

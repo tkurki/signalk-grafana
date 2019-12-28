@@ -36,7 +36,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
         };
 
         const pushNextEvent = (value: number) => {
-          addNextRow(value, Date.now());
+          addNextRow(value * (target.multiplier || 1), Date.now());
           subscriber.next({
             data: [data],
             key: target.refId,

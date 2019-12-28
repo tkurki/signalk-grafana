@@ -1,7 +1,7 @@
 import defaults from 'lodash/defaults';
 
-import React, { PureComponent } from 'react';
-import { Select, FormLabel } from '@grafana/ui';
+import React, { PureComponent, ChangeEvent } from 'react';
+import { Select, FormLabel, FormField } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { DataSource } from './DataSource';
 import { SignalKDataSourceOptions, defaultQuery, SignalKQuery } from './types';
@@ -23,19 +23,34 @@ export class QueryEditor extends PureComponent<Props, State> {
     onRunQuery(); // executes the query
   };
 
+  onMultiplierChange = (item: ChangeEvent<HTMLInputElement>) => {
+    const { onChange, query, onRunQuery } = this.props;
+    onChange({ ...query, multiplier: Number.parseFloat(item.target.value) || 1 });
+    onRunQuery(); // executes the query
+  };
+
   render() {
     const query = defaults(this.props.query, defaultQuery);
-    const { path } = query;
+    const { path, multiplier } = query;
 
     return (
       <div className="gf-form">
-        <FormLabel>Signal K Path</FormLabel>
+        <FormLabel width={7}>Signal K Path</FormLabel>
         <Select
           value={{ label: path, value: path }}
           options={this.state ? this.state.options : []}
           allowCustomValue={true}
           backspaceRemovesValue={true}
           onChange={this.onPathChange}
+        />
+        <FormField
+          label="Multiply by"
+          labelWidth={8}
+          value={multiplier}
+          width={8}
+          type="number"
+          tooltip="Use for converting units"
+          onChange={this.onMultiplierChange}
         />
       </div>
     );

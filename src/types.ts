@@ -2,6 +2,7 @@ import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
 export interface SignalKQuery extends DataQuery {
   path: string;
+  multiplier: number
 }
 
 export const defaultQuery: Partial<SignalKQuery> = {

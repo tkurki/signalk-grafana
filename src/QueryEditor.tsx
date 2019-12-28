@@ -1,7 +1,7 @@
 import defaults from 'lodash/defaults';
 
 import React, { PureComponent } from 'react';
-import { Select } from '@grafana/ui';
+import { Select, FormLabel } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { DataSource } from './DataSource';
 import { SignalKDataSourceOptions, defaultQuery, SignalKQuery } from './types';
@@ -29,6 +29,7 @@ export class QueryEditor extends PureComponent<Props, State> {
 
     return (
       <div className="gf-form">
+        <FormLabel>Signal K Path</FormLabel>
         <Select
           value={{ label: path, value: path }}
           options={this.state ? this.state.options : []}

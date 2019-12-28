@@ -46,6 +46,25 @@ const getPathOptions = (hostname: string): Promise<SelectableValue<string>[]> =>
   return fetch(`http://${hostname}/signalk/v1/flat/self/keys`)
     .then(res => res.json())
     .then((paths: string[]) => {
+      const validPathPromises: Promise<string | void>[] = paths.map(path => {
+        const metaPath = `http://${hostname}/signalk/v1/api/vessels/self/${path.split('.').join('/')}/meta`;
+        return fetch(metaPath)
+          .then(res =>
+            res.status === 200
+              ? res
+                  .json()
+                  .then(meta => (meta.units ? Promise.resolve(path) : Promise.resolve(undefined)))
+                  .catch(err => Promise.resolve(undefined))
+              : Promise.resolve(undefined)
+          )
+          .catch(err => {
+            console.log(err);
+            return Promise.resolve(undefined);
+          });
+      });
+      return Promise.all(validPathPromises).then((pathOrUndefinedA: (string | void)[]): string[] => pathOrUndefinedA.filter(p => p) as string[]);
+    })
+    .then((paths: string[]) => {
       return paths.map(path => ({ label: path, value: path }));
     });
 };

@@ -6,7 +6,9 @@
     "build": "grafana-toolkit plugin:build",
     "test": "grafana-toolkit plugin:test",
     "dev": "grafana-toolkit plugin:dev",
-    "watch": "grafana-toolkit plugin:dev --watch"
+    "watch": "grafana-toolkit plugin:dev --watch",
+    "docker:build": "docker buildx build --platform linux/amd64 -t tkurki/grafana-signalk:latest --load .",
+    "docker:push": "docker buildx build --platform linux/amd64,linux/arm/v7 -t tkurki/grafana-signalk:latest --push ."
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",

@@ -9,7 +9,7 @@ import { SignalKDataSourceOptions, defaultQuery, SignalKQuery } from './types';
 type Props = QueryEditorProps<DataSource, SignalKQuery, SignalKDataSourceOptions>;
 
 interface State {
-  options: SelectableValue<string>[];
+  options: Array<SelectableValue<string>>;
 }
 
 export class QueryEditor extends PureComponent<Props, State> {
@@ -57,11 +57,11 @@ export class QueryEditor extends PureComponent<Props, State> {
   }
 }
 
-const getPathOptions = (hostname: string): Promise<SelectableValue<string>[]> => {
+const getPathOptions = (hostname: string): Promise<Array<SelectableValue<string>>> => {
   return fetch(`http://${hostname}/signalk/v1/flat/self/keys`)
     .then(res => res.json())
     .then((paths: string[]) => {
-      const validPathPromises: Promise<string | void>[] = paths.map(path => {
+      const validPathPromises: Array<Promise<string | void>> = paths.map(path => {
         const metaPath = `http://${hostname}/signalk/v1/api/vessels/self/${path.split('.').join('/')}/meta`;
         return fetch(metaPath)
           .then(res =>
@@ -77,7 +77,7 @@ const getPathOptions = (hostname: string): Promise<SelectableValue<string>[]> =>
             return Promise.resolve(undefined);
           });
       });
-      return Promise.all(validPathPromises).then((pathOrUndefinedA: (string | void)[]): string[] => pathOrUndefinedA.filter(p => p) as string[]);
+      return Promise.all(validPathPromises).then((pathOrUndefinedA: Array<string | void>): string[] => pathOrUndefinedA.filter(p => p) as string[]);
     })
     .then((paths: string[]) => {
       return paths.map(path => ({ label: path, value: path }));

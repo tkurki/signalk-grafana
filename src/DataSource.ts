@@ -19,7 +19,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
     return new Observable<DataQueryResponse>(subscriber => {
       const maxDataPoints = options.maxDataPoints || 1000;
 
-      const pathValueHandlers: ((pv: PathValue) => void)[] = options.targets.map((target, i) => {
+      const pathValueHandlers: Array<(pv: PathValue) => void> = options.targets.map((target, i) => {
         const data = new CircularDataFrame({
           append: 'tail',
           capacity: maxDataPoints,
@@ -53,13 +53,15 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
       const ws = new WebSocket(`ws://${this.hostname}/signalk/v1/stream`);
       ws.onmessage = event => {
         const msg = JSON.parse(event.data);
-        msg.updates &&
+        if (msg.updates) {
           msg.updates.forEach((update: any) => {
-            update.values &&
+            if (update.values) {
               update.values.forEach((pathValue: any) => {
                 pathValueHandlers.forEach(pm => pm(pathValue));
               });
+            }
           });
+        }
       };
 
       return () => {
@@ -93,12 +95,12 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
         });
       };
       ws.onerror = error => {
-        console.error(error)
+        console.error(error);
         reject({
           status: 'failure',
           message: `Could not open WebSocket`,
         });
-      }
+      };
     });
   }
 }

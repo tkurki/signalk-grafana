@@ -6,7 +6,7 @@
 - [x] add simple multiplier for unit conversion
 - [x] build Docker image
 - [x] add reconnect
-- [ ] auto provision datasource & dashboard in Docker
+- [x] auto provision datasource & dashboard in Docker
 - [ ] add proper unit conversion
 - [ ] add server port to datasource config
 - [ ] add SSL toggle to datasource config

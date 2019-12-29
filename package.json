@@ -1,7 +1,7 @@
 {
-  "name": "simple-datasource",
+  "name": "@signalk/grafana-datasource",
   "version": "1.0.0",
-  "description": "Example of a Grafana Data Source",
+  "description": "Signal K Grafana DataSource",
   "scripts": {
     "build": "grafana-toolkit plugin:build",
     "test": "grafana-toolkit plugin:test",
@@ -10,7 +10,7 @@
     "docker:build": "docker buildx build --platform linux/amd64 -t tkurki/grafana-signalk:latest --load .",
     "docker:push": "docker buildx build --platform linux/amd64,linux/arm/v7 -t tkurki/grafana-signalk:latest --push ."
   },
-  "author": "Grafana Labs",
+  "author": "teppo.kurki@iki.fi",
   "license": "Apache-2.0",
   "devDependencies": {
     "@grafana/data": "next",

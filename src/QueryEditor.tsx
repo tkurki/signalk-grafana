@@ -43,6 +43,7 @@ export class QueryEditor extends PureComponent<Props, State> {
           backspaceRemovesValue={true}
           isClearable={true}
           onChange={this.onPathChange}
+          noOptionsMessage={() => 'Path list not available'}
         />
         <FormField
           label="Multiply by"

@@ -42,6 +42,13 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
             key: target.refId,
           });
         };
+        //push empty data so that the values are registered always in order
+        //otherwise the path that produces data first will be the first
+        //series in grafana, making the order undeterministic
+        subscriber.next({
+          data: [],
+          key: target.refId,
+        });
 
         return (pathValue: PathValue) => {
           if (pathValue.path === target.path) {

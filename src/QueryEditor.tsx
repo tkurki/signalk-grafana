@@ -19,7 +19,7 @@ export class QueryEditor extends PureComponent<Props, State> {
 
   onPathChange = (item: SelectableValue<string>) => {
     const { onChange, query, onRunQuery } = this.props;
-    onChange({ ...query, path: item.value || '' });
+    onChange({ ...query, path: item && item.value ? item.value : '' });
     onRunQuery(); // executes the query
   };
 
@@ -41,6 +41,7 @@ export class QueryEditor extends PureComponent<Props, State> {
           options={this.state ? this.state.options : []}
           allowCustomValue={true}
           backspaceRemovesValue={true}
+          isClearable={true}
           onChange={this.onPathChange}
         />
         <FormField

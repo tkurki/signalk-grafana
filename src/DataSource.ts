@@ -19,6 +19,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
   query(options: DataQueryRequest<SignalKQuery>): Observable<DataQueryResponse> {
     return new Observable<DataQueryResponse>(subscriber => {
       const maxDataPoints = options.maxDataPoints || 1000;
+      const intervals: number[] = [];
 
       const pathValueHandlers: Array<(pv: PathValue) => void> = options.targets.map((target, i) => {
         const data = new CircularDataFrame({
@@ -51,9 +52,22 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
           key: target.refId,
         });
 
+        let lastValueTimestamp = 0;
+        intervals.push(
+          setInterval(() => {
+            if (Date.now() - lastValueTimestamp > 1000) {
+              subscriber.next({
+                data: [data],
+                key: target.refId,
+              });
+            }
+          }, 1000)
+        );
+
         return (pathValue: PathValue) => {
           if (pathValue.path === target.path) {
             pushNextEvent(pathValue.value);
+            lastValueTimestamp = Date.now();
           }
         };
       });
@@ -74,6 +88,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
 
       return () => {
         ws.close();
+        intervals.forEach(interval => clearInterval(interval));
       };
     });
   }

@@ -4,14 +4,15 @@
 - [x] add path configuration to query editor
 - [x] fetch path list from server
 - [x] add simple multiplier for unit conversion
-- [ ] build Docker image
+- [x] build Docker image
+- [x] add reconnect
+- [ ] auto provision datasource & dashboard in Docker
 - [ ] add proper unit conversion
 - [ ] add server port to datasource config
 - [ ] add SSL toggle to datasource config
 - [ ] authentication support & testing
 - [ ] investigate proxying via Grafana server
 - [ ] add context configuration to query editor
-- [ ] add reconnect
 - [ ] check that the query is up to "now" to trigger streaming
 - [ ] use subscriptions
 - [ ] keep data in memory? so that timespan changes do not clear the graph

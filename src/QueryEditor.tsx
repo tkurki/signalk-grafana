@@ -83,5 +83,6 @@ const getPathOptions = (hostname: string): Promise<Array<SelectableValue<string>
     })
     .then((paths: string[]) => {
       return paths.map(path => ({ label: path, value: path }));
-    });
+    })
+    .catch(() => []);
 };

@@ -1,7 +1,7 @@
 import React, { PureComponent, ChangeEvent } from 'react';
-import { SecretFormField, FormField } from '@grafana/ui';
+import { FormField } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { SignalKDataSourceOptions, MySecureJsonData } from './types';
+import { SignalKDataSourceOptions } from './types';
 
 interface Props extends DataSourcePluginOptionsEditorProps<SignalKDataSourceOptions> {}
 
@@ -45,8 +45,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
   render() {
     const { options } = this.props;
-    const { jsonData, secureJsonFields } = options;
-    const secureJsonData = (options.secureJsonData || {}) as MySecureJsonData;
+    const { jsonData} = options;
 
     return (
       <div className="gf-form-group">
@@ -59,21 +58,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
             value={jsonData.hostname || ''}
             placeholder="Signal K server hostname/ip address"
           />
-        </div>
-
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <SecretFormField
-              isConfigured={(secureJsonFields && secureJsonFields.apiKey) as boolean}
-              value={secureJsonData.apiKey || ''}
-              label="API Key"
-              placeholder="secure json field (backend only)"
-              labelWidth={10}
-              inputWidth={20}
-              onReset={this.onResetAPIKey}
-              onChange={this.onAPIKeyChange}
-            />
-          </div>
         </div>
       </div>
     );

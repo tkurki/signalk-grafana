@@ -2,6 +2,7 @@ import { DataQueryRequest, DataQueryResponse, DataSourceApi, DataSourceInstanceS
 
 import { SignalKQuery, SignalKDataSourceOptions } from './types';
 import { Observable } from 'rxjs';
+import ReconnectingWebsocket from './reconnecting-websocket';
 
 interface PathValue {
   path: string;
@@ -57,7 +58,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
         };
       });
 
-      const ws = new WebSocket(`ws://${this.hostname}/signalk/v1/stream`);
+      const ws = new ReconnectingWebsocket(`ws://${this.hostname}/signalk/v1/stream`);
       ws.onmessage = event => {
         const msg = JSON.parse(event.data);
         if (msg.updates) {

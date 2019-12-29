@@ -7,8 +7,8 @@
     "test": "grafana-toolkit plugin:test",
     "dev": "grafana-toolkit plugin:dev",
     "watch": "grafana-toolkit plugin:dev --watch",
-    "docker:build": "docker buildx build --platform linux/amd64 -t tkurki/grafana-signalk:latest --load .",
-    "docker:push": "docker buildx build --platform linux/amd64,linux/arm/v7 -t tkurki/grafana-signalk:latest --push ."
+    "docker:build": "yarn build && docker buildx build --platform linux/amd64 -t tkurki/grafana-signalk:latest --load .",
+    "docker:push": "yarn build && docker buildx build --platform linux/amd64,linux/arm/v7 -t tkurki/grafana-signalk:latest --push ."
   },
   "author": "teppo.kurki@iki.fi",
   "license": "Apache-2.0",

@@ -52,20 +52,20 @@
  */
 export default class ReconnectingWebSocket {
   //These can be altered by calling code
-  public debug: boolean = false;
+  debug = false;
 
   //Time to wait before attempting reconnect (after close)
-  public reconnectInterval: number = 1000;
+  reconnectInterval = 1000;
   //Time to wait for WebSocket to open (before aborting and retrying)
-  public timeoutInterval: number = 2000;
+  timeoutInterval = 2000;
 
   //Should only be used to read WebSocket readyState
-  public readyState: number;
+  readyState: number;
 
   //Whether WebSocket was forced to close by this client
-  private forcedClose: boolean = false;
+  private forcedClose = false;
   //Whether WebSocket opening timed out
-  private timedOut: boolean = false;
+  private timedOut = false;
 
   //List of WebSocket sub-protocols
   private protocols: string[] = [];
@@ -77,14 +77,14 @@ export default class ReconnectingWebSocket {
   /**
    * Setting this to true is the equivalent of setting all instances of ReconnectingWebSocket.debug to true.
    */
-  public static debugAll = false;
+  static debugAll = false;
 
   //Set up the default 'noop' event handlers
-  public onopen: (ev: Event) => void = function(event: Event) {};
-  public onclose: (ev: CloseEvent) => void = function(event: CloseEvent) {};
-  public onconnecting: () => void = function() {};
-  public onmessage: (ev: MessageEvent) => void = function(event: MessageEvent) {};
-  public onerror: (ev: ErrorEvent) => void = function(event: ErrorEvent) {};
+  onopen: (ev: Event) => void = (event: Event) => {};
+  onclose: (ev: CloseEvent) => void = (event: CloseEvent) => {};
+  onconnecting: () => void = () => {};
+  onmessage: (ev: MessageEvent) => void = (event: MessageEvent) => {};
+  onerror: (ev: ErrorEvent) => void = (event: ErrorEvent) => {};
 
   constructor(url: string, protocols: string[] = []) {
     this.url = url;
@@ -93,14 +93,14 @@ export default class ReconnectingWebSocket {
     this.connect(false);
   }
 
-  public connect(reconnectAttempt: boolean) {
+  connect(reconnectAttempt: boolean) {
     this.ws = new WebSocket(this.url, this.protocols);
 
     this.onconnecting();
     this.log('ReconnectingWebSocket', 'attempt-connect', this.url);
 
-    var localWs = this.ws;
-    var timeout = setTimeout(() => {
+    const localWs = this.ws;
+    const timeout = setTimeout(() => {
       this.log('ReconnectingWebSocket', 'connection-timeout', this.url);
       this.timedOut = true;
       localWs.close();
@@ -143,19 +143,19 @@ export default class ReconnectingWebSocket {
     };
   }
 
-  public send(data: any) {
+  send(data: any) {
     if (this.ws) {
       this.log('ReconnectingWebSocket', 'send', this.url, data);
       return this.ws.send(data);
     } else {
-      throw 'INVALID_STATE_ERR : Pausing to reconnect websocket';
+      throw new Error('INVALID_STATE_ERR : Pausing to reconnect websocket');
     }
   }
 
   /**
    * Returns boolean, whether websocket was FORCEFULLY closed.
    */
-  public close(): boolean {
+  close(): boolean {
     if (this.ws) {
       this.forcedClose = true;
       this.ws.close();
@@ -165,12 +165,12 @@ export default class ReconnectingWebSocket {
   }
 
   /**
-   * Additional public API method to refresh the connection if still open (close, re-open).
+   * Additional API method to refresh the connection if still open (close, re-open).
    * For example, if the app suspects bad data / missed heart beats, it can try to refresh.
    *
    * Returns boolean, whether websocket was closed.
    */
-  public refresh(): boolean {
+  refresh(): boolean {
     if (this.ws) {
       this.ws.close();
       return true;

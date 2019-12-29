@@ -45,7 +45,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
   render() {
     const { options } = this.props;
-    const { jsonData} = options;
+    const { jsonData } = options;
 
     return (
       <div className="gf-form-group">

@@ -29,9 +29,15 @@ export class QueryEditor extends PureComponent<Props, State> {
     onRunQuery(); // executes the query
   };
 
+  onDollarsourceChange = (item: ChangeEvent<HTMLInputElement>) => {
+    const { onChange, query, onRunQuery } = this.props;
+    onChange({ ...query, dollarsource: item.target.value });
+    onRunQuery(); // executes the query
+  };
+
   render() {
     const query = defaults(this.props.query, defaultQuery);
-    const { path, multiplier } = query;
+    const { path, multiplier, dollarsource } = query;
 
     return (
       <div className="gf-form">
@@ -45,6 +51,15 @@ export class QueryEditor extends PureComponent<Props, State> {
           onChange={this.onPathChange}
           noOptionsMessage={() => 'Path list not available'}
         />
+        <FormField
+          label="$source"
+          labelWidth={5}
+          inputWidth={12}
+          onChange={this.onDollarsourceChange}
+          value={dollarsource || ''}
+          placeholder="Blank = no source filter"
+        />
+
         <FormField
           label="Multiply by"
           labelWidth={8}

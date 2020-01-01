@@ -21,7 +21,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
       const maxDataPoints = options.maxDataPoints || 1000;
       const intervals: number[] = [];
 
-      const pathValueHandlers: Array<(pv: PathValue) => void> = options.targets.map((target, i) => {
+      const pathValueHandlers: Array<(pv: PathValue, update: any) => void> = options.targets.map((target, i) => {
         const data = new CircularDataFrame({
           append: 'tail',
           capacity: maxDataPoints,
@@ -30,7 +30,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
         data.refId = target.refId;
         data.name = target.path;
         data.addField({ name: 'time', type: FieldType.time });
-        data.addField({ name: target.path, type: FieldType.number });
+        data.addField({ name: `${target.path}${target.dollarsource ? `$${target.dollarsource}` : ''}`, type: FieldType.number });
 
         const addNextRow = (value: number, time: number) => {
           data.fields[0].values.add(time);
@@ -64,10 +64,17 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
           }, 1000)
         );
 
-        return (pathValue: PathValue) => {
+        let sourceMatcher: (update: any) => boolean = () => true;
+        if (target.dollarsource && target.dollarsource !== '') {
+          sourceMatcher = (update: any) => getDollarsource(update) === target.dollarsource;
+        }
+
+        return (pathValue: PathValue, update: any) => {
           if (pathValue.path === target.path) {
-            pushNextEvent(pathValue.value);
-            lastValueTimestamp = Date.now();
+            if (sourceMatcher(update)) {
+              pushNextEvent(pathValue.value);
+              lastValueTimestamp = Date.now();
+            }
           }
         };
       });
@@ -79,7 +86,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
           msg.updates.forEach((update: any) => {
             if (update.values) {
               update.values.forEach((pathValue: any) => {
-                pathValueHandlers.forEach(pm => pm(pathValue));
+                pathValueHandlers.forEach(pm => pm(pathValue, update));
               });
             }
           });
@@ -127,3 +134,20 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
     });
   }
 }
+
+const getDollarsource = (update: any) => {
+  return update.$source ? update.$source : getSourceId(update.source);
+};
+
+const getSourceId = (source: any): string => {
+  if (source.src || source.pgn) {
+    return source.label + (source.src ? '.' + source.src : '') + (source.instance ? '.' + source.instance : '');
+  }
+  if (source.talker) {
+    return source.label + (source.talker ? '.' + source.talker : '.XX');
+  }
+  if (source.label) {
+    return source.label;
+  }
+  throw new Error(`Can not get sourceId from ${JSON.stringify(source)}`);
+};

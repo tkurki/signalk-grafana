@@ -17,3 +17,8 @@
 - [ ] use subscriptions
 - [ ] keep data in memory? so that timespan changes do not clear the graph
 - [ ] implement history retrieval from server via InfluxDB/ClickHouse/SK history api?
+
+
+# Developing
+
+- `yarn watch` runs concurrently the TS build and Grafana in a container with the plugin mounted and a provisioined dashboard with data from demo.signalk.org: [localhost:3002](http://localhost:3002) admin/secret

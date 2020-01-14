@@ -9,14 +9,32 @@ interface PathValue {
   value: number;
 }
 
+export interface QueryListener {
+  onQuery: (options: DataQueryRequest<SignalKQuery>) => void
+}
+
 export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOptions> {
   hostname: string;
+  listeners: Array<QueryListener> = []
   constructor(instanceSettings: DataSourceInstanceSettings<SignalKDataSourceOptions>) {
     super(instanceSettings);
     this.hostname = instanceSettings.jsonData.hostname || '';
   }
 
+  addListener(listener: QueryListener) {
+    this.listeners.push(listener)
+  }
+
+  removeListener(listener: QueryListener) {
+    const index = this.listeners.indexOf(listener)
+    if (index > -1) {
+      this.listeners.splice(index, 1);
+    }
+  }
+
   query(options: DataQueryRequest<SignalKQuery>): Observable<DataQueryResponse> {
+    this.listeners.forEach(l => l.onQuery(options))
+
     return new Observable<DataQueryResponse>(subscriber => {
       const maxDataPoints = options.maxDataPoints || 1000;
       const intervals: number[] = [];

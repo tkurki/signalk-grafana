@@ -14,7 +14,7 @@ type PathValueHandler = (pv: PathValue, update: any) => void;
 interface DataSeries {
   dataframe: CircularDataFrame;
   pathValueHandler: PathValueHandler;
-  key: string
+  key: string;
 }
 
 export interface QueryListener {
@@ -42,10 +42,12 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
 
   query(options: DataQueryRequest<SignalKQuery>): Observable<DataQueryResponse> {
     this.listeners.forEach(l => l.onQuery(options));
+    console.log(options);
 
     return new Observable<DataQueryResponse>(subscriber => {
       const maxDataPoints = options.maxDataPoints || 1000;
       const intervals: number[] = [];
+      let lastStreamingValueTimestamp = 0;
 
       const series: Array<DataSeries> = options.targets.map((target, i) => {
         const data = new CircularDataFrame({
@@ -78,17 +80,6 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
           key: target.refId,
         });
 
-        let lastValueTimestamp = 0;
-        intervals.push(
-          setInterval(() => {
-            if (Date.now() - lastValueTimestamp > 1000) {
-              subscriber.next({
-                data: [data],
-                key: target.refId,
-              });
-            }
-          }, 1000)
-        );
 
         let sourceMatcher: (update: any) => boolean = () => true;
         if (target.dollarsource && target.dollarsource !== '') {
@@ -99,35 +90,48 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
           if (pathValue.path === target.path) {
             if (sourceMatcher(update)) {
               pushNextEvent(pathValue.value);
-              lastValueTimestamp = Date.now();
+              lastStreamingValueTimestamp = Date.now();
             }
           }
         };
         return {
           dataframe: data,
           pathValueHandler,
-          key: target.refId
+          key: target.refId,
         };
       });
 
       doQuery(options, series, subscriber);
 
-      const ws = new ReconnectingWebsocket(`ws://${this.hostname}/signalk/v1/stream`);
-      ws.onmessage = event => {
-        const msg = JSON.parse(event.data);
-        if (msg.updates) {
-          msg.updates.forEach((update: any) => {
-            if (update.values) {
-              update.values.forEach((pathValue: any) => {
-                series.forEach(dataseries => dataseries.pathValueHandler(pathValue, update));
+      let ws: ReconnectingWebsocket;
+      if (options.rangeRaw && options.rangeRaw.to === 'now') {
+        ws = new ReconnectingWebsocket(`ws://${this.hostname}/signalk/v1/stream`);
+        ws.onmessage = event => {
+          const msg = JSON.parse(event.data);
+          if (msg.updates) {
+            msg.updates.forEach((update: any) => {
+              if (update.values) {
+                update.values.forEach((pathValue: any) => {
+                  series.forEach(dataseries => dataseries.pathValueHandler(pathValue, update));
+                });
+              }
+            });
+          }
+        };
+
+        intervals.push(
+          setInterval(() => {
+            if (Date.now() - lastStreamingValueTimestamp > 1000) {
+              subscriber.next({
+                data: [data],
+                key: target.refId,
               });
             }
-          });
-        }
-      };
-
+          }, 1000)
+        );
+      }
       return () => {
-        ws.close();
+        ws && ws.close();
         intervals.forEach(interval => clearInterval(interval));
       };
     });
@@ -192,7 +196,7 @@ interface HistoryResult {
   data: [any];
 }
 
-const doQuery = (options: DataQueryRequest<SignalKQuery>, series: Array<DataSeries>, subscriber: Subscriber<DataQueryResponse> ) => {
+const doQuery = (options: DataQueryRequest<SignalKQuery>, series: Array<DataSeries>, subscriber: Subscriber<DataQueryResponse>) => {
   fetch(getHistoryUrl(options))
     .then(response => response.json())
     .then((result: HistoryResult) => {
@@ -206,9 +210,9 @@ const doQuery = (options: DataQueryRequest<SignalKQuery>, series: Array<DataSeri
       series.forEach(serie => {
         subscriber.next({
           data: [serie.dataframe],
-          key: serie.key
-        })
-      })
+          key: serie.key,
+        });
+      });
     });
 };
 

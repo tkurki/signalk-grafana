@@ -7,17 +7,24 @@
 - [x] build Docker image
 - [x] add reconnect
 - [x] auto provision datasource & dashboard in Docker
+- [x] check that the query is up to "now" to trigger streaming
+- [x] implement history retrieval from server SK history api
+- [x] add context configuration to query editor (history api)
+- [ ] dual data buffer handling (history & streaming)
 - [ ] add proper unit conversion
 - [ ] add server port to datasource config
 - [ ] add SSL toggle to datasource config
 - [ ] authentication support & testing
 - [ ] investigate proxying via Grafana server
-- [ ] add context configuration to query editor
-- [ ] check that the query is up to "now" to trigger streaming
+- [ ] add 'self' handling for history
+- [ ] add name to context handling
+- [ ] add option to turn off streaming
 - [ ] use subscriptions
 - [ ] keep data in memory? so that timespan changes do not clear the graph
 - [ ] implement history retrieval from server via InfluxDB/ClickHouse/SK history api?
-
+- [ ] implement min / max / avg / median aggregates for history
+- [ ] query backend for single vessel /  multiple
+- [ ] dashboard level context selection
 
 # Developing
 

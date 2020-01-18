@@ -206,7 +206,7 @@ const doQuery = (options: DataQueryRequest<SignalKQuery>, series: Array<DataSeri
         const ts = new Date(row[0]);
         series.forEach((serie, i) => {
           serie.dataframe.fields[0].values.add(ts);
-          serie.dataframe.fields[1].values.add(row[i + 1]);
+          serie.dataframe.fields[1].values.add(row[i + 1] === null ? null : row[i + 1] * options.targets[i].multiplier);
         });
       });
       series.forEach(serie => {

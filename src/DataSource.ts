@@ -122,9 +122,11 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
         intervals.push(
           setInterval(() => {
             if (Date.now() - lastStreamingValueTimestamp > 1000) {
-              subscriber.next({
-                data: [data],
-                key: target.refId,
+              series.forEach((serie: DataSeries) => {
+                subscriber.next({
+                  data: [serie.dataframe],
+                  key: serie.key,
+                });
               });
             }
           }, 1000)

@@ -23,7 +23,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "demo.signalk.org",
+      "datasource": "default",
       "description": "",
       "fill": 1,
       "fillGradient": 6,
@@ -122,7 +122,7 @@
         "rgba(237, 129, 40, 0.89)",
         "#d44a3a"
       ],
-      "datasource": "demo.signalk.org",
+      "datasource": "default",
       "decimals": 2,
       "format": "velocityknot",
       "gauge": {
@@ -224,7 +224,7 @@
     ]
   },
   "timezone": "",
-  "title": "demo.signalk.org",
+  "title": "Demo Dashboard",
   "uid": "yNCd4iYWk",
   "version": 17
 }

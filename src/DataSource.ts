@@ -1,8 +1,9 @@
-import { DataQueryRequest, DataQueryResponse, DataSourceApi, DataSourceInstanceSettings, FieldType, CircularDataFrame } from '@grafana/data';
+import { DataQueryRequest, DataQueryResponse, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
 
 import { SignalKQuery, SignalKDataSourceOptions } from './types';
 import { Observable, Subscriber } from 'rxjs';
 import ReconnectingWebsocket from './reconnecting-websocket';
+import { DualDataFrame } from 'DualDataframe';
 
 interface PathValue {
   path: string;
@@ -12,9 +13,16 @@ interface PathValue {
 type PathValueHandler = (pv: PathValue, update: any) => void;
 
 interface DataSeries {
-  dataframe: CircularDataFrame;
+  dataframe: DualDataFrame;
   pathValueHandler: PathValueHandler;
   key: string;
+}
+
+interface HistoryResult {
+  context: string;
+  values: Array<{ path: string; method: string; source: string | null }>;
+  range: { from: string; to: string };
+  data: [any];
 }
 
 export interface QueryListener {
@@ -45,24 +53,17 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
     console.log(options);
 
     return new Observable<DataQueryResponse>(subscriber => {
-      const maxDataPoints = options.maxDataPoints || 1000;
       const intervals: number[] = [];
       let lastStreamingValueTimestamp = 0;
 
       const series: Array<DataSeries> = options.targets.map((target, i) => {
-        const data = new CircularDataFrame({
-          append: 'tail',
-          capacity: maxDataPoints,
-        });
+        const data = new DualDataFrame(target.path, 1000);
 
         data.refId = target.refId;
         data.name = target.path;
-        data.addField({ name: 'time', type: FieldType.time });
-        data.addField({ name: `${target.path}${target.dollarsource ? `$${target.dollarsource}` : ''}`, type: FieldType.number });
 
         const addNextRow = (value: number, time: number) => {
-          data.fields[0].values.add(time);
-          data.fields[1].values.add(value);
+          data.addStreamingData(value);
         };
 
         const pushNextEvent = (value: number) => {
@@ -79,7 +80,6 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
           data: [],
           key: target.refId,
         });
-
 
         let sourceMatcher: (update: any) => boolean = () => true;
         if (target.dollarsource && target.dollarsource !== '') {
@@ -101,7 +101,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
         };
       });
 
-      doQuery(options, series, subscriber);
+      this.doQuery(options, series, subscriber);
 
       let ws: ReconnectingWebsocket;
       if (options.rangeRaw && options.rangeRaw.to === 'now') {
@@ -137,6 +137,39 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
         intervals.forEach(interval => clearInterval(interval));
       };
     });
+  }
+
+  doQuery(options: DataQueryRequest<SignalKQuery>, series: Array<DataSeries>, subscriber: Subscriber<DataQueryResponse>) {
+    fetch(this.getHistoryUrl(options))
+      .then(response => response.json())
+      .then((result: HistoryResult) => {
+        result.data.forEach(row => {
+          const ts = new Date(row[0]);
+          series.forEach((serie, i) => {
+            serie.dataframe.addHistoryData(ts, row[i + 1] === null ? null : row[i + 1] * options.targets[i].multiplier);
+          });
+        });
+        series.forEach(serie => {
+          subscriber.next({
+            data: [serie.dataframe],
+            key: serie.key,
+          });
+        });
+      });
+  }
+
+  getHistoryUrl(options: DataQueryRequest<SignalKQuery>) {
+    const paths = options.targets.map(target => target.path).join(',');
+    const queryParams: { [k: string]: string } = {
+      context: options.targets[0].context,
+      paths,
+      from: options.range.from.toISOString(),
+      to: options.range.to.toISOString(),
+      resolution: (options.intervalMs / 1000).toString(),
+    };
+    const url: URL = new URL(`http://${this.hostname}/signalk/v1/history/values`);
+    Object.keys(queryParams).forEach(key => url.searchParams.append(key, queryParams[key]));
+    return url.toString();
   }
 
   async testDatasource() {
@@ -189,45 +222,4 @@ const getSourceId = (source: any): string => {
     return source.label;
   }
   throw new Error(`Can not get sourceId from ${JSON.stringify(source)}`);
-};
-
-interface HistoryResult {
-  context: string;
-  values: Array<{ path: string; method: string; source: string | null }>;
-  range: { from: string; to: string };
-  data: [any];
-}
-
-const doQuery = (options: DataQueryRequest<SignalKQuery>, series: Array<DataSeries>, subscriber: Subscriber<DataQueryResponse>) => {
-  fetch(getHistoryUrl(options))
-    .then(response => response.json())
-    .then((result: HistoryResult) => {
-      result.data.forEach(row => {
-        const ts = new Date(row[0]);
-        series.forEach((serie, i) => {
-          serie.dataframe.fields[0].values.add(ts);
-          serie.dataframe.fields[1].values.add(row[i + 1] === null ? null : row[i + 1] * options.targets[i].multiplier);
-        });
-      });
-      series.forEach(serie => {
-        subscriber.next({
-          data: [serie.dataframe],
-          key: serie.key,
-        });
-      });
-    });
-};
-
-const getHistoryUrl = (options: DataQueryRequest<SignalKQuery>) => {
-  const paths = options.targets.map(target => target.path).join(',');
-  const queryParams: { [k: string]: string } = {
-    context: options.targets[0].context,
-    paths,
-    from: options.range.from.toISOString(),
-    to: options.range.to.toISOString(),
-    resolution: (options.intervalMs / 1000).toString(),
-  };
-  const url: URL = new URL(`http://localhost:3000/signalk/v1/history/values`);
-  Object.keys(queryParams).forEach(key => url.searchParams.append(key, queryParams[key]));
-  return url.toString();
 };

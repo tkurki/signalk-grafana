@@ -10,7 +10,7 @@
 - [x] check that the query is up to "now" to trigger streaming
 - [x] implement history retrieval from server SK history api
 - [x] add context configuration to query editor (history api)
-- [ ] dual data buffer handling (history & streaming)
+- [x] dual data buffer handling (history & streaming)
 - [ ] add proper unit conversion
 - [ ] add server port to datasource config
 - [ ] add SSL toggle to datasource config

@@ -57,10 +57,9 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
       let lastStreamingValueTimestamp = 0;
 
       const series: Array<DataSeries> = options.targets.map((target, i) => {
-        const data = new DualDataFrame(target.path, 1000);
+        const data = new DualDataFrame(`${target.path}:${target.aggregate}`, 1000);
 
         data.refId = target.refId;
-        data.name = target.path;
 
         const addNextRow = (value: number, time: number) => {
           data.addStreamingData(value);
@@ -159,7 +158,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
   }
 
   getHistoryUrl(options: DataQueryRequest<SignalKQuery>) {
-    const paths = options.targets.map(target => target.path).join(',');
+    const paths = options.targets.map(target => `${target.path}:${target.aggregate || 'average'}`).join(',');
     const queryParams: { [k: string]: string } = {
       context: options.targets[0].context,
       paths,

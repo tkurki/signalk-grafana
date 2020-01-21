@@ -13,6 +13,22 @@ interface State {
   contexts: Array<SelectableValue<string>>;
 }
 
+interface AggregateFunctionValue {
+  label: string;
+  value: string;
+}
+
+type AggregateFunctionValueMap = { [key: string]: AggregateFunctionValue }
+
+const aggregateFunctions: AggregateFunctionValueMap = [
+  { label: 'Average', value: 'average' },
+  { label: 'Min', value: 'min' },
+  { label: 'Max', value: 'max' },
+].reduce((acc: { [key: string]: AggregateFunctionValue }, a: AggregateFunctionValue) => {
+  acc[a.value] = a;
+  return acc;
+}, {});
+
 export class QueryEditor extends PureComponent<Props, State> {
   queryListener: QueryListener = {
     onQuery: (options: DataQueryRequest<SignalKQuery>) => {
@@ -51,9 +67,15 @@ export class QueryEditor extends PureComponent<Props, State> {
     onRunQuery();
   };
 
+  onAggregateChange = (item: SelectableValue<string>) => {
+    const { onChange, query, onRunQuery } = this.props;
+    onChange({ ...query, aggregate: item.value || 'average' });
+    onRunQuery();
+  };
+
   render() {
     const query = defaults(this.props.query, defaultQuery);
-    const { path, multiplier, dollarsource, context } = query;
+    const { path, multiplier, dollarsource, context, aggregate } = query;
 
     return (
       <div className="gf-form">
@@ -76,6 +98,15 @@ export class QueryEditor extends PureComponent<Props, State> {
           isClearable={true}
           onChange={this.onPathChange}
           noOptionsMessage={() => 'Path list not available'}
+        />
+        <FormLabel width={5}>Aggregate</FormLabel>
+        <Select
+          value={aggregateFunctions[aggregate || 'average'] }
+          options={Object.values(aggregateFunctions)}
+          allowCustomValue={false}
+          backspaceRemovesValue={false}
+          isClearable={true}
+          onChange={this.onAggregateChange}
         />
         <FormField
           label="$source"

@@ -4,6 +4,7 @@ export interface SignalKQuery extends DataQuery {
   context: string;
   path: string;
   multiplier: number;
+  aggregate: string;
   dollarsource?: string;
 }
 

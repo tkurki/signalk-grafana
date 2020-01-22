@@ -12,7 +12,7 @@
 - [x] dual data buffer handling (history & streaming)
 - [x] implement history retrieval from server via InfluxDB/ClickHouse/SK history api?
 - [x] implement min / max / avg aggregates for history
-- [ ] dangling ws connections
+- [x] dangling ws connections
 - [ ] use subscriptions
 - [ ] add context configuration to query editor (history api, self handling)
 - [ ] add proper unit conversion

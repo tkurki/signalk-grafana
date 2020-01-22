@@ -14,7 +14,6 @@ type PathValueHandler = (pv: PathValue, update: any) => void;
 
 interface DataSeries {
   dataframe: DualDataFrame;
-  pathValueHandler: PathValueHandler;
   key: string;
 }
 
@@ -32,6 +31,11 @@ export interface QueryListener {
 export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOptions> {
   hostname: string;
   listeners: Array<QueryListener> = [];
+  pathValueHandlers: Array<PathValueHandler> = [];
+  intervals: number[] = [];
+
+  ws?: ReconnectingWebsocket;
+
   constructor(instanceSettings: DataSourceInstanceSettings<SignalKDataSourceOptions>) {
     super(instanceSettings);
     this.hostname = instanceSettings.jsonData.hostname || '';
@@ -48,12 +52,45 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
     }
   }
 
+  addPathValueHandler(handler: PathValueHandler) {
+    this.pathValueHandlers.push(handler);
+  }
+
+  ensureWsIsOpen() {
+    if (this.ws) {
+      return;
+    }
+    this.ws = new ReconnectingWebsocket(`ws://${this.hostname}/signalk/v1/stream`);
+    console.log('open');
+    this.ws.onmessage = event => {
+      const msg = JSON.parse(event.data);
+      this.pathValueHandlers.forEach(h => {
+        try {
+          if (msg.updates) {
+            msg.updates.forEach((update: any) => {
+              if (update.values) {
+                update.values.forEach((pathValue: any) => {
+                  this.pathValueHandlers.forEach(handler => handler(pathValue, update));
+                });
+              }
+            });
+          }
+        } catch (e) {
+          console.log(e.message);
+        }
+      });
+    };
+  }
+
   query(options: DataQueryRequest<SignalKQuery>): Observable<DataQueryResponse> {
     this.listeners.forEach(l => l.onQuery(options));
     console.log(options);
+    this.ensureWsIsOpen();
+    this.pathValueHandlers = [];
+    this.intervals.forEach(interval => clearInterval(interval));
+    this.intervals = [];
 
-    return new Observable<DataQueryResponse>(subscriber => {
-      const intervals: number[] = [];
+    const result = new Observable<DataQueryResponse>(subscriber => {
       let lastStreamingValueTimestamp = 0;
 
       const series: Array<DataSeries> = options.targets.map((target, i) => {
@@ -93,49 +130,28 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
             }
           }
         };
+        if (options.rangeRaw && options.rangeRaw.to === 'now') {
+          this.pathValueHandlers.push(pathValueHandler);
+          this.intervals.push(
+            (setInterval(() => {
+              if (Date.now() - lastStreamingValueTimestamp > 1000) {
+                subscriber.next({
+                  data: [data],
+                  key: data.name,
+                });
+              }
+            }, 1000) as unknown) as number
+          );
+        }
         return {
           dataframe: data,
-          pathValueHandler,
           key: target.refId,
         };
       });
 
       this.doQuery(options, series, subscriber);
-
-      let ws: ReconnectingWebsocket;
-      if (options.rangeRaw && options.rangeRaw.to === 'now') {
-        ws = new ReconnectingWebsocket(`ws://${this.hostname}/signalk/v1/stream`);
-        ws.onmessage = event => {
-          const msg = JSON.parse(event.data);
-          if (msg.updates) {
-            msg.updates.forEach((update: any) => {
-              if (update.values) {
-                update.values.forEach((pathValue: any) => {
-                  series.forEach(dataseries => dataseries.pathValueHandler(pathValue, update));
-                });
-              }
-            });
-          }
-        };
-
-        intervals.push(
-          setInterval(() => {
-            if (Date.now() - lastStreamingValueTimestamp > 1000) {
-              series.forEach((serie: DataSeries) => {
-                subscriber.next({
-                  data: [serie.dataframe],
-                  key: serie.key,
-                });
-              });
-            }
-          }, 1000)
-        );
-      }
-      return () => {
-        ws && ws.close();
-        intervals.forEach(interval => clearInterval(interval));
-      };
     });
+    return result;
   }
 
   doQuery(options: DataQueryRequest<SignalKQuery>, series: Array<DataSeries>, subscriber: Subscriber<DataQueryResponse>) {

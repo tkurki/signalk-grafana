@@ -32,7 +32,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
   hostname: string;
   listeners: Array<QueryListener> = [];
   pathValueHandlers: Array<PathValueHandler> = [];
-  intervals: number[] = [];
+  idleInterval?: number;
 
   ws?: ReconnectingWebsocket;
 
@@ -87,8 +87,11 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
     console.log(options);
     this.ensureWsIsOpen();
     this.pathValueHandlers = [];
-    this.intervals.forEach(interval => clearInterval(interval));
-    this.intervals = [];
+
+    if (this.idleInterval) {
+      clearInterval(this.idleInterval);
+      this.idleInterval = undefined;
+    }
 
     const result = new Observable<DataQueryResponse>(subscriber => {
       let lastStreamingValueTimestamp = 0;
@@ -105,8 +108,8 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
         const data = new DualDataFrame(`${target.path}:${target.aggregate}`, 1000);
         data.refId = target.refId;
 
-        const pushNextEvent = (value: number) => {
-          data.addStreamingData(value * (target.multiplier || 1));
+        const onDataInserted = () => {
+          lastStreamingValueTimestamp = Date.now();
           subscriber.next({
             data: [data],
             key: target.refId,
@@ -114,37 +117,25 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
         };
 
         if (rangeIsUptoNow(options.rangeRaw)) {
-          let sourceMatcher: (update: any) => boolean = () => true;
-          if (target.dollarsource && target.dollarsource !== '') {
-            sourceMatcher = (update: any) => getDollarsource(update) === target.dollarsource;
-          }
-
-          const pathValueHandler = (pathValue: PathValue, update: any) => {
-            if (pathValue.path === target.path) {
-              if (sourceMatcher(update)) {
-                pushNextEvent(pathValue.value);
-                lastStreamingValueTimestamp = Date.now();
-              }
-            }
-          };
-          this.pathValueHandlers.push(pathValueHandler);
-
-          this.intervals.push(
-            (setInterval(() => {
-              if (Date.now() - lastStreamingValueTimestamp > 1000) {
-                subscriber.next({
-                  data: [data],
-                  key: data.name,
-                });
-              }
-            }, 1000) as unknown) as number
-          );
+          this.pathValueHandlers.push(pathValueHandler(target.path, data, onDataInserted, target.dollarsource, target.multiplier));
         }
         return {
           dataframe: data,
           key: target.refId,
         };
       });
+
+      if (rangeIsUptoNow(options.rangeRaw) && options.targets.length > 0) {
+        //if there are no updates advance the time with timer
+        this.idleInterval = (setInterval(() => {
+          if (Date.now() - lastStreamingValueTimestamp > 1000) {
+            subscriber.next({
+              data: [series[0].dataframe],
+              key: series[0].dataframe.refId,
+            });
+          }
+        }, 1000) as unknown) as number;
+      }
 
       this.doQuery(options, series, subscriber);
     });
@@ -237,3 +228,19 @@ const getSourceId = (source: any): string => {
 };
 
 const rangeIsUptoNow = (rangeRaw?: RawTimeRange) => rangeRaw && rangeRaw.to === 'now';
+
+const pathValueHandler = (path: string, data: DualDataFrame, onDataInserted: () => void, dollarsource?: string, multiplier?: number) => {
+  let sourceMatcher: (update: any) => boolean = () => true;
+  if (dollarsource && dollarsource !== '') {
+    sourceMatcher = (update: any) => getDollarsource(update) === dollarsource;
+  }
+
+  return (pathValue: PathValue, update: any) => {
+    if (pathValue.path === path) {
+      if (sourceMatcher(update)) {
+        data.addStreamingData(pathValue.value * (multiplier || 1));
+        onDataInserted();
+      }
+    }
+  };
+};

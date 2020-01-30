@@ -93,17 +93,13 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
     const result = new Observable<DataQueryResponse>(subscriber => {
       let lastStreamingValueTimestamp = 0;
 
-      const series: Array<DataSeries> = options.targets.map((target, i) => {
+      const series: Array<DataSeries> = options.targets.map((target) => {
         const data = new DualDataFrame(`${target.path}:${target.aggregate}`, 1000);
 
         data.refId = target.refId;
 
-        const addNextRow = (value: number, time: number) => {
-          data.addStreamingData(value);
-        };
-
         const pushNextEvent = (value: number) => {
-          addNextRow(value * (target.multiplier || 1), Date.now());
+          data.addStreamingData(value * (target.multiplier || 1);
           subscriber.next({
             data: [data],
             key: target.refId,

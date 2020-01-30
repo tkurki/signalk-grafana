@@ -1,4 +1,4 @@
-import { DataQueryRequest, DataQueryResponse, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
+import { DataQueryRequest, DataQueryResponse, DataSourceApi, DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
 
 import { SignalKQuery, SignalKDataSourceOptions } from './types';
 import { Observable, Subscriber } from 'rxjs';
@@ -93,18 +93,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
     const result = new Observable<DataQueryResponse>(subscriber => {
       let lastStreamingValueTimestamp = 0;
 
-      const series: Array<DataSeries> = options.targets.map((target) => {
-        const data = new DualDataFrame(`${target.path}:${target.aggregate}`, 1000);
-
-        data.refId = target.refId;
-
-        const pushNextEvent = (value: number) => {
-          data.addStreamingData(value * (target.multiplier || 1);
-          subscriber.next({
-            data: [data],
-            key: target.refId,
-          });
-        };
+      const series: Array<DataSeries> = options.targets.map(target => {
         //push empty data so that the values are registered always in order
         //otherwise the path that produces data first will be the first
         //series in grafana, making the order undeterministic
@@ -113,21 +102,33 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
           key: target.refId,
         });
 
-        let sourceMatcher: (update: any) => boolean = () => true;
-        if (target.dollarsource && target.dollarsource !== '') {
-          sourceMatcher = (update: any) => getDollarsource(update) === target.dollarsource;
-        }
+        const data = new DualDataFrame(`${target.path}:${target.aggregate}`, 1000);
+        data.refId = target.refId;
 
-        const pathValueHandler = (pathValue: PathValue, update: any) => {
-          if (pathValue.path === target.path) {
-            if (sourceMatcher(update)) {
-              pushNextEvent(pathValue.value);
-              lastStreamingValueTimestamp = Date.now();
-            }
-          }
+        const pushNextEvent = (value: number) => {
+          data.addStreamingData(value * (target.multiplier || 1));
+          subscriber.next({
+            data: [data],
+            key: target.refId,
+          });
         };
-        if (options.rangeRaw && options.rangeRaw.to === 'now') {
+
+        if (rangeIsUptoNow(options.rangeRaw)) {
+          let sourceMatcher: (update: any) => boolean = () => true;
+          if (target.dollarsource && target.dollarsource !== '') {
+            sourceMatcher = (update: any) => getDollarsource(update) === target.dollarsource;
+          }
+
+          const pathValueHandler = (pathValue: PathValue, update: any) => {
+            if (pathValue.path === target.path) {
+              if (sourceMatcher(update)) {
+                pushNextEvent(pathValue.value);
+                lastStreamingValueTimestamp = Date.now();
+              }
+            }
+          };
           this.pathValueHandlers.push(pathValueHandler);
+
           this.intervals.push(
             (setInterval(() => {
               if (Date.now() - lastStreamingValueTimestamp > 1000) {
@@ -234,3 +235,5 @@ const getSourceId = (source: any): string => {
   }
   throw new Error(`Can not get sourceId from ${JSON.stringify(source)}`);
 };
+
+const rangeIsUptoNow = (rangeRaw?: RawTimeRange) => rangeRaw && rangeRaw.to === 'now';

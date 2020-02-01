@@ -18,7 +18,7 @@ interface AggregateFunctionValue {
   value: string;
 }
 
-type AggregateFunctionValueMap = { [key: string]: AggregateFunctionValue }
+type AggregateFunctionValueMap = { [key: string]: AggregateFunctionValue };
 
 const aggregateFunctions: AggregateFunctionValueMap = [
   { label: 'Average', value: 'average' },
@@ -101,7 +101,7 @@ export class QueryEditor extends PureComponent<Props, State> {
         />
         <FormLabel width={5}>Aggregate</FormLabel>
         <Select
-          value={aggregateFunctions[aggregate || 'average'] }
+          value={aggregateFunctions[aggregate || 'average']}
           options={Object.values(aggregateFunctions)}
           allowCustomValue={false}
           backspaceRemovesValue={false}

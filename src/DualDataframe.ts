@@ -38,8 +38,8 @@ export class DualDataFrame implements DataFrame {
       df.addField({ name: 'time', type: FieldType.time });
       df.addField({ name: fieldName, type: FieldType.number });
     });
- 
-    this.myVectors = []
+
+    this.myVectors = [];
     this.myVectors[0] = new DualProxyVector(this.mutableDataFrame, this.circularDataFrame, 0);
     this.myVectors[1] = new DualProxyVector(this.mutableDataFrame, this.circularDataFrame, 1);
 
@@ -62,28 +62,28 @@ export class DualDataFrame implements DataFrame {
   addHistoryData(ts: Date, value: number | null) {
     this.mutableDataFrame.appendRow([ts, value]);
     this.length = this.mutableDataFrame.length + this.circularDataFrame.length;
-    this.myVectors.forEach(vector => vector.length = this.length)
+    this.myVectors.forEach(vector => (vector.length = this.length));
   }
 
   addStreamingData(value: number) {
     this.circularDataFrame.fields[0].values.add(Date.now());
     this.circularDataFrame.fields[1].values.add(value);
     this.length = this.mutableDataFrame.length + this.circularDataFrame.length;
-    this.myVectors.forEach(vector => vector.length = this.length)
+    this.myVectors.forEach(vector => (vector.length = this.length));
   }
 }
 
 class DualProxyVector implements Vector {
-  index: number
+  index: number;
   historyData: MutableDataFrame;
   streamData: CircularDataFrame;
   length = 0;
   get = (index: number) => {
-    const historyLength = this.historyData.length
+    const historyLength = this.historyData.length;
     if (index < historyLength) {
-      return this.historyData.fields[this.index].values.get(index)
+      return this.historyData.fields[this.index].values.get(index);
     } else {
-      return this.streamData.fields[this.index].values.get(index - historyLength)
+      return this.streamData.fields[this.index].values.get(index - historyLength);
     }
   };
   toArray = () => {
@@ -95,4 +95,3 @@ class DualProxyVector implements Vector {
     this.index = index;
   }
 }
-

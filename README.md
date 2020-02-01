@@ -13,6 +13,9 @@
 - [x] implement history retrieval from server via InfluxDB/ClickHouse/SK history api?
 - [x] implement min / max / avg aggregates for history
 - [x] dangling ws connections
+- [x] coordinate handling for navigation.position
+- [ ] default multiplier should be 1 and can not be missing
+- [ ] implement min / max / avg / median aggregates for streaming data
 - [ ] use subscriptions
 - [ ] add context configuration to query editor (history api, self handling)
 - [ ] add proper unit conversion
@@ -22,10 +25,9 @@
 - [ ] authentication support & testing
 - [ ] add 'self' handling for history
 - [ ] add name to context handling
-- [ ] add option to turn off streaming
+- [ ] add option to turn off streaming (you can always query now-1s, maybe not necessary?)
 - [ ] https://github.com/grafana/grafana/issues/21264
 - [ ] keep data in memory? so that timespan changes do not clear the graph (not relevant with history fetching)
-- [ ] implement min / max / avg / median aggregates for streaming data
 - [ ] test backend separately for streaming & history capabilities
 - [ ] query backend for single vessel /  multiple and show/hide context selection accordingly
 - [ ] dashboard level context selection

@@ -14,6 +14,7 @@
 - [x] implement min / max / avg aggregates for history
 - [x] dangling ws connections
 - [x] coordinate handling for navigation.position
+- [ ] allow only-streaming and only-history datasources
 - [ ] default multiplier should be 1 and can not be missing
 - [ ] implement min / max / avg / median aggregates for streaming data
 - [ ] use subscriptions

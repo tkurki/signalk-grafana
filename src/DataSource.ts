@@ -181,7 +181,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
   }
 
   async testDatasource() {
-    return new Promise((resolve, reject) => {
+    const wsPromise = new Promise((resolve, reject) => {
       const ws = new WebSocket(`ws://${this.hostname}/signalk/v1/stream?subscribe=none`);
       ws.onmessage = event => {
         try {
@@ -211,6 +211,26 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
           message: `Could not open WebSocket`,
         });
       };
+    });
+
+    const apiPromise = fetch(`http://${this.hostname}/signalk/v1/history/values`).then(response => {
+      if (response.status === 400) {
+        return {
+          status: 'success',
+          message: 'Success',
+        };
+      }
+      throw new Error(`History endpoint returned ${response.status}`);
+    });
+
+    return Promise.all([wsPromise, apiPromise].map((p: Promise<any>) => p.catch((e: Error) => e))).then(statuses => {
+      if (statuses.some(status => status.status === 'success')) {
+        return Promise.resolve({
+          status: 'success',
+          message: 'Success',
+        });
+      }
+      return Promise.reject({ status: 'failure', message: `Neither streaming nor http history api works` });
     });
   }
 }

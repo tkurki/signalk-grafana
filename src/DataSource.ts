@@ -85,7 +85,6 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
   query(options: DataQueryRequest<SignalKQuery>): Observable<DataQueryResponse> {
     this.listeners.forEach(l => l.onQuery(options));
     console.log(options);
-    this.ensureWsIsOpen();
     this.pathValueHandlers = [];
 
     if (this.idleInterval) {
@@ -126,6 +125,8 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
       });
 
       if (rangeIsUptoNow(options.rangeRaw) && options.targets.length > 0) {
+        this.ensureWsIsOpen();
+
         //if there are no updates advance the time with timer
         this.idleInterval = (setInterval(() => {
           if (Date.now() - lastStreamingValueTimestamp > 1000) {

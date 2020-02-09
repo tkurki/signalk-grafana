@@ -61,7 +61,6 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
       return;
     }
     this.ws = new ReconnectingWebsocket(`ws://${this.hostname}/signalk/v1/stream`);
-    console.log('open');
     this.ws.onmessage = event => {
       const msg = JSON.parse(event.data);
       this.pathValueHandlers.forEach(h => {
@@ -84,7 +83,6 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
 
   query(options: DataQueryRequest<SignalKQuery>): Observable<DataQueryResponse> {
     this.listeners.forEach(l => l.onQuery(options));
-    console.log(options);
     this.pathValueHandlers = [];
 
     if (this.idleInterval) {

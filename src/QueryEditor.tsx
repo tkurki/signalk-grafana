@@ -32,7 +32,13 @@ const aggregateFunctions: AggregateFunctionValueMap = [
 export class QueryEditor extends PureComponent<Props, State> {
   queryListener: QueryListener = {
     onQuery: (options: DataQueryRequest<SignalKQuery>) => {
-      fetchContexts(options).then(contexts => this.setState({ contexts }));
+      fetchContexts(options).then(contexts => {
+        contexts.unshift({
+          value: 'vessels.self',
+          label: 'self',
+        });
+        this.setState({ contexts });
+      });
     },
   };
   componentDidMount() {
@@ -85,7 +91,7 @@ export class QueryEditor extends PureComponent<Props, State> {
       <div className="gf-form">
         <FormLabel width={7}>Context</FormLabel>
         <Select
-          value={{ label: context, value: context }}
+          value={{ label: context || 'self', value: context || 'vessels.self'}}
           options={this.state ? this.state.contexts : []}
           allowCustomValue={true}
           backspaceRemovesValue={true}

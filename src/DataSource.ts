@@ -167,7 +167,8 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
   getHistoryUrl(options: DataQueryRequest<SignalKQuery>) {
     const paths = options.targets.map(target => `${target.path}:${target.aggregate || 'average'}`).join(',');
     const queryParams: { [k: string]: string } = {
-      context: options.targets[0].context,
+      //FIXME what if targets have different contexts
+      context: options.targets[0].context || 'vessels.self',
       paths,
       from: options.range.from.toISOString(),
       to: options.range.to.toISOString(),

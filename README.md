@@ -14,12 +14,14 @@
 - [x] implement min / max / avg aggregates for history
 - [x] dangling ws connections
 - [x] coordinate handling for navigation.position
-- [ ] coordinate querying if targets have different contexts
-- [ ] default to `self`
+- [x] default multiplier should be 1 and can not be missing
+- [x] default to `self`
+- [ ] check that there is no hardcoded host or port
+- [ ] use full `vessels.xx` as context
+- [ ] fix querying if targets have different contexts
 - [ ] move trackmap to the same repo
 - [ ] CH: implement different aggregates as multiple UNION ALL queries
 - [ ] allow only-streaming and only-history datasources
-- [ ] default multiplier should be 1 and can not be missing
 - [ ] implement min / max / avg / median aggregates for streaming data
 - [ ] use subscriptions
 - [ ] add context configuration to query editor (history api, self handling)
@@ -29,7 +31,7 @@
 - [ ] add SSL toggle to datasource config
 - [ ] authentication support & testing
 - [ ] add 'self' handling for history
-- [ ] add name to context handling
+- [ ] add name to context handling, show MMSI:Name in the popup
 - [ ] add option to turn off streaming (you can always query now-1s, maybe not necessary?)
 - [ ] https://github.com/grafana/grafana/issues/21264
 - [ ] keep data in memory? so that timespan changes do not clear the graph (not relevant with history fetching)

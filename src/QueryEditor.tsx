@@ -56,8 +56,12 @@ export class QueryEditor extends PureComponent<Props, State> {
   };
 
   onMultiplierChange = (item: ChangeEvent<HTMLInputElement>) => {
+    let multiplier = Number.parseFloat(item.target.value);
+    if (typeof multiplier === 'undefined') {
+      multiplier = 1;
+    }
     const { onChange, query, onRunQuery } = this.props;
-    onChange({ ...query, multiplier: Number.parseFloat(item.target.value) || 1 });
+    onChange({ ...query, multiplier });
     onRunQuery();
   };
 
@@ -120,7 +124,7 @@ export class QueryEditor extends PureComponent<Props, State> {
         <FormField
           label="Multiply by"
           labelWidth={8}
-          value={multiplier}
+          value={typeof multiplier === 'number' ? multiplier : 1}
           width={8}
           type="number"
           tooltip="Use for converting units"

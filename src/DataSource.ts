@@ -150,7 +150,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
           series.forEach((serie, i) => {
             let value = row[i + 1];
             if (typeof value === 'number') {
-              value = value * options.targets[i].multiplier;
+              value = value * (options.targets[i].multiplier === undefined ? 1 : options.targets[i].multiplier);
             }
             serie.dataframe.addHistoryData(ts, value);
           });

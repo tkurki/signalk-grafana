@@ -14,6 +14,10 @@
 - [x] implement min / max / avg aggregates for history
 - [x] dangling ws connections
 - [x] coordinate handling for navigation.position
+- [ ] coordinate querying if targets have different contexts
+- [ ] default to `self`
+- [ ] move trackmap to the same repo
+- [ ] CH: implement different aggregates as multiple UNION ALL queries
 - [ ] allow only-streaming and only-history datasources
 - [ ] default multiplier should be 1 and can not be missing
 - [ ] implement min / max / avg / median aggregates for streaming data

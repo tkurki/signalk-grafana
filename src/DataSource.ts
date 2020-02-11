@@ -30,8 +30,8 @@ export interface QueryListener {
 
 export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOptions> {
   hostname: string;
-  listeners: Array<QueryListener> = [];
-  pathValueHandlers: Array<PathValueHandler> = [];
+  listeners: QueryListener[] = [];
+  pathValueHandlers: PathValueHandler[] = [];
   idleInterval?: number;
 
   ws?: ReconnectingWebsocket;
@@ -93,7 +93,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
     const result = new Observable<DataQueryResponse>(subscriber => {
       let lastStreamingValueTimestamp = 0;
 
-      const series: Array<DataSeries> = options.targets.map(target => {
+      const series: DataSeries[] = options.targets.map(target => {
         //push empty data so that the values are registered always in order
         //otherwise the path that produces data first will be the first
         //series in grafana, making the order undeterministic

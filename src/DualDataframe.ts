@@ -18,7 +18,7 @@ import { Field, Vector } from '@grafana/data';
  */
 export class DualDataFrame implements DataFrame {
   name?: string | undefined;
-  fields: Field<any, Vector<any>>[];
+  fields: Array<Field<any, Vector<any>>>;
   refId?: string | undefined;
   meta?: import('@grafana/data').QueryResultMeta | undefined;
   length: number;

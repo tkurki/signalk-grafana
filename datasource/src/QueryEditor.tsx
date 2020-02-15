@@ -20,11 +20,12 @@ interface AggregateFunctionValue {
 
 type AggregateFunctionValueMap = { [key: string]: AggregateFunctionValue };
 
-const aggregateFunctions: AggregateFunctionValueMap = [
+const aggregateFunctionData = [
   { label: 'Average', value: 'average' },
   { label: 'Min', value: 'min' },
   { label: 'Max', value: 'max' },
-].reduce((acc: { [key: string]: AggregateFunctionValue }, a: AggregateFunctionValue) => {
+]
+const aggregateFunctions: AggregateFunctionValueMap = aggregateFunctionData.reduce((acc: { [key: string]: AggregateFunctionValue }, a: AggregateFunctionValue) => {
   acc[a.value] = a;
   return acc;
 }, {});
@@ -112,7 +113,7 @@ export class QueryEditor extends PureComponent<Props, State> {
         <FormLabel width={5}>Aggregate</FormLabel>
         <Select
           value={aggregateFunctions[aggregate || 'average']}
-          options={Object.values(aggregateFunctions)}
+          options={aggregateFunctionData}
           allowCustomValue={false}
           backspaceRemovesValue={false}
           isClearable={true}
@@ -168,7 +169,7 @@ const getPathOptions = (hostname: string): Promise<Array<SelectableValue<string>
 };
 
 const fetchContexts = (options: DataQueryRequest<SignalKQuery>) =>
-  fetch(getContextsUrl(options.range), {
+  fetch(getContextsUrl(options.range || undefined), {
     mode: 'cors',
     headers: {
       'Access-Control-Allow-Origin': '*',
@@ -177,7 +178,10 @@ const fetchContexts = (options: DataQueryRequest<SignalKQuery>) =>
     .then(res => res.json())
     .then(toLabelValues);
 
-const getContextsUrl = (range: TimeRange) => {
+const getContextsUrl = (range?: TimeRange) => {
+  if (!range) {
+    throw new Error('Valid range required for fetching contexts')
+  }
   const queryParams: { [k: string]: string } = { from: range.from.toISOString(), to: range.to.toISOString() };
   const url: URL = new URL(`http://localhost:3000/signalk/v1/history/contexts`);
   Object.keys(queryParams).forEach(key => url.searchParams.append(key, queryParams[key]));

@@ -166,6 +166,9 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
 
   getHistoryUrl(options: DataQueryRequest<SignalKQuery>) {
     const paths = options.targets.map(target => `${target.path}:${target.aggregate || 'average'}`).join(',');
+    if (!options.range || !options.range.from || !options.range.to || !options.intervalMs) {
+      throw new Error('Valid range and intervalMs required')
+    }
     const queryParams: { [k: string]: string } = {
       //FIXME what if targets have different contexts
       context: options.targets[0].context || 'vessels.self',

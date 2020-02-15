@@ -8,7 +8,7 @@
     "test": "grafana-toolkit plugin:test",
     "dev": "grafana-toolkit plugin:dev",
     "watch": "concurrently --kill-others  \"yarn wsrun watch\" \"yarn docker:run\"",
-    "docker:run": "docker run --rm -p 3002:3000 -e \"GF_SECURITY_ADMIN_PASSWORD=secret\" -v `pwd`/datasource:/var/lib/grafana/plugins/sk-datasource  -v `pwd`/:/etc/grafana/provisioning/datasources -v `pwd`/dashboards:/etc/grafana/provisioning/dashboards grafana/grafana:6.5.2",
+    "docker:run": "docker run --rm -p 3002:3000 -e \"GF_SECURITY_ADMIN_PASSWORD=secret\" -v `pwd`/datasource/dist:/var/lib/grafana/plugins/sk-datasource  -v `pwd`/:/etc/grafana/provisioning/datasources -v `pwd`/dashboards:/etc/grafana/provisioning/dashboards grafana/grafana:6.5.2",
     "docker:build": "yarn build && docker buildx build --platform linux/amd64 -t tkurki/grafana-signalk:latest --load .",
     "docker:push": "yarn build && (((! docker buildx ls  | grep -q multibuilder) && docker buildx create --name multibuilder) || docker buildx use multibuilder) && docker buildx build --platform linux/amd64,linux/arm/v7 -t tkurki/grafana-signalk:latest --push ."
   },

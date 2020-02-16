@@ -4,19 +4,6 @@ Grafana Map Panel that can display tracks from a Signal K Datasource.
 
 Specify `navigation.position` as the Signal K path in the datasource configuration.
 
-# Todo
-
-- [x] fetch and plot coordinates
-- [x] discard outliers
-- [ ] Grafana cursor support
-- [ ] disable streaming updates? probably will cause havoc
-- [ ] panel resize support
-- [ ] zoom in by clicking and dragging
-- [ ] streaming support
-- [ ] data overlay support a k a "colored dots on the track"
-- [ ] chart configuration support
-- [ ] outlier discard configuration (maybe on/off at least)
-
 # Development
 
 First, install dependencies:

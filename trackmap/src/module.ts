@@ -1,6 +1,6 @@
 import { PanelPlugin } from '@grafana/data';
-import { SimpleOptions, defaults } from './types';
-import { SimplePanel } from './SimplePanel';
-import { SimpleEditor } from './SimpleEditor';
+import { TrackMapOptions, defaults } from './types';
+import { TrackMapPanel } from './TrackMapPanel';
+import { TrackMapEditor } from './TrackMapEditor';
 
-export const plugin = new PanelPlugin<SimpleOptions>(SimplePanel).setDefaults(defaults).setEditor(SimpleEditor);
+export const plugin = new PanelPlugin<TrackMapOptions>(TrackMapPanel).setDefaults(defaults).setEditor(TrackMapEditor);

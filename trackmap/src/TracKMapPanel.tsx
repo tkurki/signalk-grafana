@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
 import { PanelProps } from '@grafana/data';
-import { SimpleOptions } from 'types';
+import { TrackMapOptions } from 'types';
 
-interface Props extends PanelProps<SimpleOptions> {}
+interface Props extends PanelProps<TrackMapOptions> {}
 
 import { Map as LeafletMap, GeoJSON, TileLayer } from 'react-leaflet';
 
@@ -11,7 +11,7 @@ import { LineString } from 'geojson';
 import { LatLngBounds } from 'leaflet';
 import ValidatingBuffer from 'ValidatingBuffer';
 
-export class SimplePanel extends PureComponent<Props> {
+export class TrackMapPanel extends PureComponent<Props> {
   render() {
     const points: LineString = {
       type: 'LineString',

@@ -1,7 +1,7 @@
-export interface SimpleOptions {
+export interface TrackMapOptions {
   text: string;
 }
 
-export const defaults: SimpleOptions = {
+export const defaults: TrackMapOptions = {
   text: 'The default text!',
 };

@@ -1,17 +1,15 @@
 apiVersion: 1
 
 deleteDatasources:
-  - name: demo.signalk.org
-    orgId: 1
+
 
 datasources:
-- name: demo.signalk.org
+- name: test
   id: 1
   orgId: 1
   type: signalk-datasource
   typeLogoUrl: ''
   access: proxy
-  url: http://signalk-stash-e2e_clickhouse_1:8123
   password: ''
   user: ''
   database: ''
@@ -21,8 +19,7 @@ datasources:
   withCredentials: false
   isDefault: true
   jsonData:
-    hostname: demo.signalk.org
-    path: admin
+    hostname: localhost:3000
 secureJsonData:
   version: 3
   readOnly: false

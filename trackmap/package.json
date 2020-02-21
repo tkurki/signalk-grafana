@@ -12,6 +12,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@grafana/data": "next",
+    "@grafana/runtime": "^6.6.2",
     "@grafana/toolkit": "next",
     "@grafana/ui": "next",
     "@types/geojson": "^7946.0.7",

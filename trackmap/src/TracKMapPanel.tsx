@@ -1,17 +1,45 @@
 import React, { PureComponent } from 'react';
 import { PanelProps } from '@grafana/data';
+import {SystemJS} from '@grafana/runtime';
 import { TrackMapOptions } from 'types';
 
 interface Props extends PanelProps<TrackMapOptions> {}
 
-import { Map as LeafletMap, GeoJSON, TileLayer } from 'react-leaflet';
+interface State {
+  currentPoint?: any
+}
+
+interface PositionWithTime {
+  timestamp: any,
+  position: any
+}
+
+import { Map as LeafletMap, GeoJSON, TileLayer, Circle } from 'react-leaflet';
 
 import 'leaflet/dist/leaflet.css';
 import { LineString } from 'geojson';
 import { LatLngBounds } from 'leaflet';
 import ValidatingBuffer from 'ValidatingBuffer';
 
-export class TrackMapPanel extends PureComponent<Props> {
+export class TrackMapPanel extends PureComponent<Props, State> {
+  pointsByTime: PositionWithTime[] = []
+  constructor(props:Props) {
+    super(props)
+    // props.onChangeTimeRange({from: new Date('2019-01-01').getTime(), to: new Date('2019-10-01').getTime()})
+    SystemJS.load('app/core/app_events').then((appEvents:any) => {
+      appEvents.on('graph-hover', (e:any) => {
+        const currentPoint = this.pointByTime(e.pos.x)
+        if (currentPoint) {
+          this.setState({currentPoint: currentPoint.position})
+        }
+      })
+    })
+    this.state = {}
+  }
+
+  pointByTime(ts:number) {
+    return this.pointsByTime.find((pt) => pt.timestamp > ts)
+  }
   render() {
     const points: LineString = {
       type: 'LineString',
@@ -20,6 +48,7 @@ export class TrackMapPanel extends PureComponent<Props> {
 
     let i;
     const positions = this.props.data.series[0].fields[1].values;
+    const timestamps = this.props.data.series[0].fields[0].values;
     let minLat = 90
     let maxLat = -90
     let minLng = 180
@@ -42,11 +71,16 @@ export class TrackMapPanel extends PureComponent<Props> {
       points.coordinates.push(point);
     })
     for (i = 0; i < positions.length; i++) {
-      validatingBuffer.push(positions.get(i));
+      const position = positions.get(i)
+      if (position !== null) {
+        this.pointsByTime.push({timestamp: timestamps.get(i), position})
+        validatingBuffer.push(positions.get(i));
+      }
     }
     validatingBuffer.flush()
 
     const bounds = new LatLngBounds([minLat, minLng], [maxLat, maxLng])
+    console.log(this.state.currentPoint)
     return (
       <LeafletMap bounds={bounds} style={{width:'100%', height:'100%'}} >
         <TileLayer url={'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'} minZoom={0} maxZoom={20} />
@@ -60,6 +94,7 @@ export class TrackMapPanel extends PureComponent<Props> {
         />
         <TileLayer url={'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png'} minZoom={16} maxZoom={21} maxNativeZoom={18} />
         <GeoJSON key={Date.now()} data={points} />
+        {this.state.currentPoint ? <Circle center={[this.state.currentPoint[1], this.state.currentPoint[0]]} radius={30}/> : undefined}
       </LeafletMap>
     );
   }

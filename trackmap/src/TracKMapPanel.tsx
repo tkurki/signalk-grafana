@@ -82,7 +82,7 @@ export class TrackMapPanel extends PureComponent<Props, State> {
     const bounds = new LatLngBounds([minLat, minLng], [maxLat, maxLng])
     console.log(this.state.currentPoint)
     return (
-      <LeafletMap bounds={bounds} style={{width:'100%', height:'100%'}} >
+      <LeafletMap bounds={bounds} style={{width:'100%', height:'100%'}}>
         <TileLayer url={'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'} minZoom={0} maxZoom={20} />
         <TileLayer url={'https://signalk-stash.chacal.fi/map/v1/{z}/{x}/{y}.png'} minZoom={8} maxZoom={15} />
         <TileLayer

@@ -1,7 +1,9 @@
 export interface TrackMapOptions {
-  text: string;
+  trackColor: string
+  pointColor: string
 }
 
 export const defaults: TrackMapOptions = {
-  text: 'The default text!',
+  trackColor: '#0000ff',
+  pointColor: '#ff0000'
 };

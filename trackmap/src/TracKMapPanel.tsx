@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { PanelProps } from '@grafana/data';
+import { PanelProps, AbsoluteTimeRange } from '@grafana/data';
 import {SystemJS} from '@grafana/runtime';
 import { TrackMapOptions } from 'types';
 import memoize from 'memoize-one'
@@ -12,20 +12,21 @@ interface State {
 
 interface PositionWithTime {
   timestamp: any,
-  position: any
+  position: LatLng
 }
 
 interface MapParams {
   trackGeojson: LineString
   bounds: any
-  pointsByTime: PositionWithTime[]
+  pointsByTime: PositionWithTime[],
+  getTimeframeByBounds: (b: LatLngBounds) => AbsoluteTimeRange | null
 }
 
 import { Map as LeafletMap, GeoJSON, TileLayer, Circle } from 'react-leaflet';
 
 import 'leaflet/dist/leaflet.css';
 import { LineString } from 'geojson';
-import { LatLngBounds } from 'leaflet';
+import { LatLngBounds, LatLng } from 'leaflet';
 import ValidatingBuffer from 'ValidatingBuffer';
 
 export class TrackMapPanel extends PureComponent<Props, State> {
@@ -48,9 +49,16 @@ export class TrackMapPanel extends PureComponent<Props, State> {
   }
 
   render() {
-    const {bounds, trackGeojson} = dataToMapParams(this.props.data)
+    const {bounds, trackGeojson, getTimeframeByBounds} = dataToMapParams(this.props.data)
+    const onBoxZoomEnd = ({boxZoomBounds}: {boxZoomBounds: LatLngBounds}) => {
+      const timeframe = getTimeframeByBounds(boxZoomBounds)
+      if (timeframe) {
+        this.props.onChangeTimeRange(timeframe)
+      }
+    }
+
     return (
-      <LeafletMap bounds={bounds} style={{width:'100%', height:'100%'}}>
+      <LeafletMap onboxzoomend={onBoxZoomEnd} bounds={bounds} style={{width:'100%', height:'100%'}}>
         <TileLayer url={'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'} minZoom={0} maxZoom={20} />
         <TileLayer url={'https://signalk-stash.chacal.fi/map/v1/{z}/{x}/{y}.png'} minZoom={8} maxZoom={15} />
         <TileLayer
@@ -62,7 +70,7 @@ export class TrackMapPanel extends PureComponent<Props, State> {
         />
         <TileLayer url={'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png'} minZoom={16} maxZoom={21} maxNativeZoom={18} />
         <GeoJSON key={Date.now()} data={trackGeojson} />
-        {this.state.currentPoint ? <Circle center={[this.state.currentPoint[1], this.state.currentPoint[0]]} radius={30}/> : undefined}
+        {this.state.currentPoint ? <Circle center={this.state.currentPoint} radius={30}/> : undefined}
       </LeafletMap>
     );
   }
@@ -102,7 +110,7 @@ const dataToMapParams = memoize((data:any): MapParams => {
   for (i = 0; i < positions.length; i++) {
     const position = positions.get(i)
     if (position !== null) {
-      pointsByTime.push({timestamp: timestamps.get(i), position})
+      pointsByTime.push({timestamp: timestamps.get(i), position: new LatLng(position[1], position[0])})
       validatingBuffer.push(positions.get(i));
     }
   }
@@ -113,6 +121,23 @@ const dataToMapParams = memoize((data:any): MapParams => {
   return {
     trackGeojson,
     bounds,
-    pointsByTime
+    pointsByTime,
+    getTimeframeByBounds: timeframeByBoundsGetter(pointsByTime)
   }
 })
+
+function timeframeByBoundsGetter(pointsByTime: PositionWithTime[]) {
+  return (bounds: LatLngBounds): AbsoluteTimeRange | null => {
+    const timerange = pointsByTime.reduce<AbsoluteTimeRange>((acc, {position, timestamp}) => {
+      if (bounds.contains(position)) {
+        return {from: Math.min(acc.from, timestamp),to : Math.max(acc.to, timestamp)}
+      }
+      return acc
+    }, {from: Number.POSITIVE_INFINITY, to: 0})
+
+    if (timerange.from <= timerange.to) {
+      return timerange
+    }
+    return null
+  }
+}

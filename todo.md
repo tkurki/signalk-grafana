@@ -16,9 +16,9 @@
 - [x] coordinate handling for navigation.position
 - [x] default multiplier should be 1 and can not be missing
 - [x] default to `self`
-- [ ] show shared tooltip on the map
+- [x] show shared tooltip on the map
+- [x] shift drag to zoom in map to set timerange
 - [ ] show tooltip on graph from position on map
-- [ ] zoom in map to set timerange
 - [ ] editable map layers
 - [ ] move trackmap to the same repo
 - [ ] check that there is no hardcoded host or port

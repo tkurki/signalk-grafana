@@ -20,5 +20,8 @@
     "concurrently": "^5.1.0",
     "leaflet": "^1.6.0",
     "react-leaflet": "^2.6.1"
+  },
+  "dependencies": {
+    "memoize-one": "^5.1.1"
   }
 }

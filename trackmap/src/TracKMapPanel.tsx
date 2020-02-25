@@ -22,7 +22,7 @@ interface MapParams {
   getTimeframeByBounds: (b: LatLngBounds) => AbsoluteTimeRange | null
 }
 
-import { Map as LeafletMap, GeoJSON, TileLayer, Circle } from 'react-leaflet';
+import { Map as LeafletMap, GeoJSON, TileLayer, Circle, TileLayerProps } from 'react-leaflet';
 
 import 'leaflet/dist/leaflet.css';
 import { LineString } from 'geojson';
@@ -59,22 +59,22 @@ export class TrackMapPanel extends PureComponent<Props, State> {
 
     return (
       <LeafletMap onboxzoomend={onBoxZoomEnd} bounds={bounds} style={{width:'100%', height:'100%'}}>
-        <TileLayer url={'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'} minZoom={0} maxZoom={20} />
-        <TileLayer url={'https://signalk-stash.chacal.fi/map/v1/{z}/{x}/{y}.png'} minZoom={8} maxZoom={15} />
-        <TileLayer
-          url={'http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}'}
-          minZoom={16}
-          maxNativeZoom={20}
-          maxZoom={21}
-          subdomains={['mt0', 'mt1', 'mt2', 'mt3']}
-        />
-        <TileLayer url={'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png'} minZoom={16} maxZoom={21} maxNativeZoom={18} />
+        {this.props.options.layers.map(toTileLayer)}
         <GeoJSON key={Date.now()} data={trackGeojson} />
         {this.state.currentPoint ? <Circle center={this.state.currentPoint} radius={30}/> : undefined}
       </LeafletMap>
     );
   }
 }
+
+const toTileLayer = ({url, minZoom, maxZoom, maxNativeZoom, subdomains}: TileLayerProps) =>
+  <TileLayer
+    url={url}
+    minZoom={minZoom}
+    maxZoom={maxZoom}
+    maxNativeZoom={maxZoom}
+    subdomains={subdomains}
+  />
 
 const dataToMapParams = memoize((data:any): MapParams => {
   const pointsByTime: PositionWithTime[] = []

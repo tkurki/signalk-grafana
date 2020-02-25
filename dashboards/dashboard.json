@@ -20,14 +20,48 @@
     {
       "datasource": null,
       "gridPos": {
-        "h": 8,
+        "h": 10,
         "w": 12,
         "x": 0,
         "y": 0
       },
       "id": 7,
       "options": {
-        "text": "The default text!"
+        "layers": [
+          {
+            "maxNativeZoom": 20,
+            "maxZoom": 20,
+            "minZoom": 0,
+            "subdomains": [
+              "a",
+              "b",
+              "c"
+            ],
+            "url": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          },
+          {
+            "maxNativeZoom": 20,
+            "maxZoom": 21,
+            "minZoom": 1,
+            "subdomains": [
+              "mt0",
+              "mt1",
+              "mt2",
+              "mt3"
+            ],
+            "url": "http://{s}.google.com/vt/lyrs=s&x: x}&y: y}&z: z}"
+          },
+          {
+            "maxNativeZoom": 18,
+            "maxZoom": 21,
+            "minZoom": 16,
+            "subdomains": [],
+            "url": "https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"
+          }
+        ],
+        "pointColor": "#ff0000",
+        "text": "The default text!",
+        "trackColor": "#0000ff"
       },
       "targets": [
         {
@@ -42,91 +76,6 @@
       "type": "signalk-trackmap"
     },
     {
-      "cacheTimeout": null,
-      "colorBackground": false,
-      "colorValue": false,
-      "colors": [
-        "#299c46",
-        "rgba(237, 129, 40, 0.89)",
-        "#d44a3a"
-      ],
-      "datasource": "default",
-      "decimals": 2,
-      "format": "velocityknot",
-      "gauge": {
-        "maxValue": 100,
-        "minValue": 0,
-        "show": false,
-        "thresholdLabels": false,
-        "thresholdMarkers": true
-      },
-      "gridPos": {
-        "h": 3,
-        "w": 4,
-        "x": 12,
-        "y": 0
-      },
-      "id": 5,
-      "interval": null,
-      "links": [],
-      "mappingType": 1,
-      "mappingTypes": [
-        {
-          "name": "value to text",
-          "value": 1
-        },
-        {
-          "name": "range to text",
-          "value": 2
-        }
-      ],
-      "maxDataPoints": 100,
-      "nullPointMode": "connected",
-      "nullText": null,
-      "options": {},
-      "postfix": "",
-      "postfixFontSize": "50%",
-      "prefix": "",
-      "prefixFontSize": "50%",
-      "rangeMaps": [
-        {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
-        }
-      ],
-      "sparkline": {
-        "fillColor": "rgba(31, 118, 189, 0.18)",
-        "full": false,
-        "lineColor": "rgb(31, 120, 193)",
-        "show": true,
-        "ymax": null,
-        "ymin": null
-      },
-      "tableColumn": "",
-      "targets": [
-        {
-          "multiplier": 1.94384,
-          "path": "navigation.speedOverGround",
-          "refId": "A"
-        }
-      ],
-      "thresholds": "",
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "SOG",
-      "type": "singlestat",
-      "valueFontSize": "80%",
-      "valueMaps": [
-        {
-          "op": "=",
-          "text": "N/A",
-          "value": "null"
-        }
-      ],
-      "valueName": "avg"
-    },
-    {
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
@@ -136,10 +85,10 @@
       "fill": 1,
       "fillGradient": 6,
       "gridPos": {
-        "h": 9,
+        "h": 10,
         "w": 12,
-        "x": 0,
-        "y": 8
+        "x": 12,
+        "y": 0
       },
       "hiddenSeries": false,
       "id": 2,
@@ -231,8 +180,8 @@
     "list": []
   },
   "time": {
-    "from": "2019-07-25T05:41:01.898Z",
-    "to": "2019-07-25T16:09:45.797Z"
+    "from": "2019-07-21T12:00:00.000Z",
+    "to": "2019-07-22T12:00:00.000Z"
   },
   "timepicker": {
     "refresh_intervals": [

@@ -13,16 +13,16 @@ export default class ValidatingBuffer<T> {
       this.callback(this.buffer.pop());
     }
     if (this.buffer.length === 2 && !this.validate([t, ...this.buffer])) {
-      this.buffer.shift()
+      this.buffer.shift();
     }
-    this.buffer.unshift(t)
+    this.buffer.unshift(t);
   }
 
   flush() {
     if (this.buffer.length === 3) {
-      const isMiddleValid = this.validate(this.buffer)
+      const isMiddleValid = this.validate(this.buffer);
       if (isMiddleValid) {
-        this.callback(this.buffer.pop())
+        this.callback(this.buffer.pop());
       }
     }
   }

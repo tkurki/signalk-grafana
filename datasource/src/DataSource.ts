@@ -1,4 +1,10 @@
-import { DataQueryRequest, DataQueryResponse, DataSourceApi, DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
+import {
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  RawTimeRange,
+} from '@grafana/data';
 
 import { SignalKQuery, SignalKDataSourceOptions } from './types';
 import { Observable, Subscriber } from 'rxjs';
@@ -114,7 +120,9 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
         };
 
         if (rangeIsUptoNow(options.rangeRaw)) {
-          this.pathValueHandlers.push(pathValueHandler(target.path, data, onDataInserted, target.dollarsource, target.multiplier));
+          this.pathValueHandlers.push(
+            pathValueHandler(target.path, data, onDataInserted, target.dollarsource, target.multiplier)
+          );
         }
         return {
           dataframe: data,
@@ -166,8 +174,8 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
 
   getHistoryUrl(options: DataQueryRequest<SignalKQuery>) {
     const paths = options.targets.map(target => `${target.path}:${target.aggregate || 'average'}`).join(',');
-    if (!options.range || !options.range.from || !options.range.to || !options.intervalMs) {
-      throw new Error('Valid range and intervalMs required')
+    if (!options.range || !options.range.from || !options.range.to || !options.intervalMs) {
+      throw new Error('Valid range and intervalMs required');
     }
     const queryParams: { [k: string]: string } = {
       //FIXME what if targets have different contexts
@@ -256,7 +264,13 @@ const getSourceId = (source: any): string => {
 
 const rangeIsUptoNow = (rangeRaw?: RawTimeRange) => rangeRaw && rangeRaw.to === 'now';
 
-const pathValueHandler = (path: string, data: DualDataFrame, onDataInserted: () => void, dollarsource?: string, multiplier?: number) => {
+const pathValueHandler = (
+  path: string,
+  data: DualDataFrame,
+  onDataInserted: () => void,
+  dollarsource?: string,
+  multiplier?: number
+) => {
   let sourceMatcher: (update: any) => boolean = () => true;
   if (dollarsource && dollarsource !== '') {
     sourceMatcher = (update: any) => getDollarsource(update) === dollarsource;

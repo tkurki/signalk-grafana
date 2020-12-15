@@ -1,5 +1,7 @@
+import { LegacyForms } from '@grafana/ui';
+const { FormField } = LegacyForms;
+
 import React, { PureComponent, ChangeEvent } from 'react';
-import { FormField } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { SignalKDataSourceOptions } from './types';
 

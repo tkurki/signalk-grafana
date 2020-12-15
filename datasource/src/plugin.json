@@ -1,37 +1,33 @@
 {
-  "name": "Signal K Datasource",
-  "id": "signalk-datasource",
   "type": "datasource",
-  "partials": {
-    "config": "public/app/plugins/datasource/XXXX/partials/config.html"
-  },
+  "name": "sk-datasource",
+  "id": "signalk-sk-datasource",
   "metrics": true,
-  "annotations": false,
-  "alerting": false,
   "info": {
-    "description": "Signal K datasource",
+    "description": "Signal K datasource (streaming & historical data)",
     "author": {
-      "name": "Teppo Kurki",
-      "url": "teppo.kurki@iki.fi"
+      "name": "teppo.kurki@ıki.fi",
+      "url": "http://signalk.org/"
     },
+    "keywords": [],
     "logos": {
       "small": "img/logo.svg",
       "large": "img/logo.svg"
     },
     "links": [
       {
-        "name": "GitHub",
-        "url": "https://github.com/"
+        "name": "Website",
+        "url": "https://github.com/grafana/simple-datasource"
       },
       {
-        "name": "Apache 2 License",
-        "url": "https://www.apache.org/licenses/LICENSE-2.0"
+        "name": "License",
+        "url": "https://github.com/grafana/simple-datasource/blob/master/LICENSE"
       }
     ],
+    "screenshots": [],
     "version": "%VERSION%",
     "updated": "%TODAY%"
   },
-
   "dependencies": {
     "grafanaVersion": "6.5.x",
     "plugins": []

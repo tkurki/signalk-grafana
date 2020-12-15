@@ -1,10 +1,14 @@
+import { InlineFormLabel, LegacyForms } from '@grafana/ui';
+
 import defaults from 'lodash/defaults';
 
 import React, { PureComponent, ChangeEvent } from 'react';
-import { Select, FormLabel, FormField } from '@grafana/ui';
+import { Select } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue, DataQueryRequest, TimeRange } from '@grafana/data';
 import { DataSource, QueryListener } from './DataSource';
 import { SignalKDataSourceOptions, defaultQuery, SignalKQuery } from './types';
+
+const { FormField } = LegacyForms;
 
 type Props = QueryEditorProps<DataSource, SignalKQuery, SignalKDataSourceOptions>;
 
@@ -24,11 +28,14 @@ const aggregateFunctionData = [
   { label: 'Average', value: 'average' },
   { label: 'Min', value: 'min' },
   { label: 'Max', value: 'max' },
-]
-const aggregateFunctions: AggregateFunctionValueMap = aggregateFunctionData.reduce((acc: { [key: string]: AggregateFunctionValue }, a: AggregateFunctionValue) => {
-  acc[a.value] = a;
-  return acc;
-}, {});
+];
+const aggregateFunctions: AggregateFunctionValueMap = aggregateFunctionData.reduce(
+  (acc: { [key: string]: AggregateFunctionValue }, a: AggregateFunctionValue) => {
+    acc[a.value] = a;
+    return acc;
+  },
+  {}
+);
 
 export class QueryEditor extends PureComponent<Props, State> {
   queryListener: QueryListener = {
@@ -90,7 +97,7 @@ export class QueryEditor extends PureComponent<Props, State> {
 
     return (
       <div className="gf-form">
-        <FormLabel width={7}>Context</FormLabel>
+        <InlineFormLabel width={7}>Context</InlineFormLabel>
         <Select
           value={{ label: context || 'self', value: context || 'vessels.self' }}
           options={this.state ? this.state.contexts : []}
@@ -98,9 +105,9 @@ export class QueryEditor extends PureComponent<Props, State> {
           backspaceRemovesValue={true}
           isClearable={true}
           onChange={this.onContextChange}
-          noOptionsMessage={() => 'Context list not available'}
+          noOptionsMessage={'Context list not available'}
         />
-        <FormLabel width={7}>Signal K Path</FormLabel>
+        <InlineFormLabel width={7}>Signal K Path</InlineFormLabel>
         <Select
           value={{ label: path, value: path }}
           options={this.state ? this.state.paths : []}
@@ -108,9 +115,9 @@ export class QueryEditor extends PureComponent<Props, State> {
           backspaceRemovesValue={true}
           isClearable={true}
           onChange={this.onPathChange}
-          noOptionsMessage={() => 'Path list not available'}
+          noOptionsMessage={'Path list not available'}
         />
-        <FormLabel width={5}>Aggregate</FormLabel>
+        <InlineFormLabel width={5}>Aggregate</InlineFormLabel>
         <Select
           value={aggregateFunctions[aggregate || 'average']}
           options={aggregateFunctionData}
@@ -162,7 +169,9 @@ const getPathOptions = (hostname: string): Promise<Array<SelectableValue<string>
             return Promise.resolve(undefined);
           });
       });
-      return Promise.all(validPathPromises).then((pathOrUndefinedA: Array<string | void>): string[] => pathOrUndefinedA.filter(p => p) as string[]);
+      return Promise.all(validPathPromises).then(
+        (pathOrUndefinedA: Array<string | void>): string[] => pathOrUndefinedA.filter(p => p) as string[]
+      );
     })
     .then(toLabelValues)
     .catch(() => []);
@@ -180,7 +189,7 @@ const fetchContexts = (options: DataQueryRequest<SignalKQuery>) =>
 
 const getContextsUrl = (range?: TimeRange) => {
   if (!range) {
-    throw new Error('Valid range required for fetching contexts')
+    throw new Error('Valid range required for fetching contexts');
   }
   const queryParams: { [k: string]: string } = { from: range.from.toISOString(), to: range.to.toISOString() };
   const url: URL = new URL(`http://localhost:3000/signalk/v1/history/contexts`);

@@ -1,21 +1,27 @@
 {
-  "name": "@signalk/grafana-datasource",
+  "name": "signalk-sk-datasource",
   "version": "1.0.0",
-  "description": "Signal K Grafana DataSource",
+  "description": "Signal K datasource (streaming & historical data)",
   "scripts": {
     "build": "grafana-toolkit plugin:build",
     "test": "grafana-toolkit plugin:test",
     "dev": "grafana-toolkit plugin:dev",
-    "watch": "grafana-toolkit plugin:dev --watch",
-    "docker:build": "yarn build && docker buildx build --platform linux/amd64 -t tkurki/grafana-signalk:latest --load .",
-    "docker:push": "yarn build && (((! docker buildx ls  | grep -q multibuilder) && docker buildx create --name multibuilder) || docker buildx use multibuilder) && docker buildx build --platform linux/amd64,linux/arm/v7 -t tkurki/grafana-signalk:latest --push ."
+    "watch": "grafana-toolkit plugin:dev --watch"
   },
-  "author": "teppo.kurki@iki.fi",
+  "author": "teppo.kurki@ıki.fi",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@grafana/data": "next",
-    "@grafana/toolkit": "next",
-    "@grafana/ui": "next",
-    "@types/lodash": "latest"
+    "@grafana/data": "^7.0.0",
+    "@grafana/toolkit": "^7.0.0",
+    "@grafana/ui": "^7.0.0",
+    "@types/lodash": "latest",
+    "@testing-library/jest-dom": "5.4.0",
+    "@testing-library/react": "^10.0.2"
+  },
+  "engines": {
+    "node": ">=12 <13"
+  },
+  "resolutions": {
+    "rxjs": "6.6.3"
   }
 }

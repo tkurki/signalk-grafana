@@ -1,9 +1,5 @@
 {
   "private": true,
-  "workspaces": [
-    "datasource",
-    "trackmap"
-  ],
   "scripts": {
     "build": "yarn wsrun build",
     "watch": "concurrently --kill-others  \"yarn wsrun watch\" \"yarn docker:run\"",

@@ -1,4 +1,4 @@
-import { InlineFormLabel, LegacyForms, VerticalGroup } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineFormLabel, Input, LegacyForms, VerticalGroup } from '@grafana/ui';
 
 import defaults from 'lodash/defaults';
 
@@ -97,65 +97,70 @@ export class QueryEditor extends PureComponent<Props, State> {
 
     return (
       <div>
-        <div className="gf-form">
-        <InlineFormLabel width={7}>Context</InlineFormLabel>
-        <Select
-          value={{ label: context || 'self', value: context || 'vessels.self' }}
-          options={this.state ? this.state.contexts : []}
-          allowCustomValue={true}
-          backspaceRemovesValue={true}
-          isClearable={true}
-          onChange={this.onContextChange}
-          noOptionsMessage={'Context list not available'}
-          width={40}
-        />
-        </div>
+        <InlineFieldRow>
+          <InlineField labelWidth={14} label="Context">
+            <Select
+              value={{ label: context || 'self', value: context || 'vessels.self' }}
+              options={this.state ? this.state.contexts : []}
+              allowCustomValue={true}
+              backspaceRemovesValue={true}
+              isClearable={true}
+              onChange={this.onContextChange}
+              noOptionsMessage={'Context list not available'}
+              width={40}
+            />
+          </InlineField>
+        </InlineFieldRow>
 
-        <div className="gf-form">
-        <InlineFormLabel width={7}>Path</InlineFormLabel>
-        <Select
-          value={{ label: path, value: path }}
-          options={this.state ? this.state.paths : []}
-          allowCustomValue={true}
-          backspaceRemovesValue={true}
-          isClearable={true}
-          onChange={this.onPathChange}
-          noOptionsMessage={'Path list not available'}
-          width={80}
-        />
-        <FormField
-          label="$source"
-          labelWidth={5}
-          inputWidth={12}
-          onChange={this.onDollarsourceChange}
-          value={dollarsource || ''}
-          placeholder="Blank = no source filter"
-        />
+        <InlineFieldRow>
+          <InlineField labelWidth={14} label="Path">
+            <Select
+              value={{ label: path, value: path }}
+              options={this.state ? this.state.paths : []}
+              allowCustomValue={true}
+              backspaceRemovesValue={true}
+              isClearable={true}
+              onChange={this.onPathChange}
+              noOptionsMessage={'Path list not available'}
+              width={80}
+            />
+          </InlineField>
+          <InlineField labelWidth={14} label="$source">
+            <Input
+              css={''}
+              width={12}
+              name={'$source'}
+              id={'$source'}
+              onChange={this.onDollarsourceChange}
+              value={dollarsource || ''}
+              placeholder="Blank = no source filter"
+            />
+          </InlineField>
+        </InlineFieldRow>
 
-        </div>
-
-        <div className="gf-form">
-        <InlineFormLabel width={7}>Aggregate</InlineFormLabel>
-        <Select
-          value={aggregateFunctions[aggregate || 'average']}
-          options={aggregateFunctionData}
-          allowCustomValue={false}
-          backspaceRemovesValue={false}
-          isClearable={true}
-          onChange={this.onAggregateChange}
-          width={20}
-        />
-        <FormField
-          label="Multiply by"
-          labelWidth={8}
-          value={typeof multiplier === 'number' ? multiplier : 1}
-          width={8}
-          type="number"
-          tooltip="Use for converting units"
-          onChange={this.onMultiplierChange}
-        />
-        </div>
-
+        <InlineFieldRow>
+          <InlineField labelWidth={14} label="Aggregate">
+            <Select
+              value={aggregateFunctions[aggregate || 'average']}
+              options={aggregateFunctionData}
+              allowCustomValue={false}
+              backspaceRemovesValue={false}
+              isClearable={true}
+              onChange={this.onAggregateChange}
+              width={20}
+            />
+          </InlineField>
+          <InlineField labelWidth={14} label="Multiply by">
+            <Input
+              css={''}
+              label="Multiply by"
+              value={typeof multiplier === 'number' ? multiplier : 1}
+              width={8}
+              type="number"
+              onChange={this.onMultiplierChange}
+            />
+          </InlineField>
+        </InlineFieldRow>
       </div>
     );
   }

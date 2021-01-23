@@ -108,9 +108,14 @@ const dataToMapParams = memoize(
     );
     for (i = 0; i < positions.length; i++) {
       const position = positions.get(i);
-      if (position !== null) {
+      if (
+        position !== null &&
+        Array.isArray([position]) &&
+        typeof position[0] === 'number' &&
+        typeof position[1] === 'number'
+      ) {
         pointsByTime.push({ timestamp: timestamps.get(i), position: new LatLng(position[1], position[0]) });
-        validatingBuffer.push(positions.get(i));
+        validatingBuffer.push(position);
       }
     }
     validatingBuffer.flush();

@@ -1,4 +1,4 @@
-import { InlineFormLabel, LegacyForms } from '@grafana/ui';
+import { InlineFormLabel, LegacyForms, VerticalGroup } from '@grafana/ui';
 
 import defaults from 'lodash/defaults';
 
@@ -96,7 +96,8 @@ export class QueryEditor extends PureComponent<Props, State> {
     const { path, multiplier, dollarsource, context, aggregate } = query;
 
     return (
-      <div className="gf-form">
+      <div>
+        <div className="gf-form">
         <InlineFormLabel width={7}>Context</InlineFormLabel>
         <Select
           value={{ label: context || 'self', value: context || 'vessels.self' }}
@@ -106,8 +107,12 @@ export class QueryEditor extends PureComponent<Props, State> {
           isClearable={true}
           onChange={this.onContextChange}
           noOptionsMessage={'Context list not available'}
+          width={40}
         />
-        <InlineFormLabel width={7}>Signal K Path</InlineFormLabel>
+        </div>
+
+        <div className="gf-form">
+        <InlineFormLabel width={7}>Path</InlineFormLabel>
         <Select
           value={{ label: path, value: path }}
           options={this.state ? this.state.paths : []}
@@ -116,15 +121,7 @@ export class QueryEditor extends PureComponent<Props, State> {
           isClearable={true}
           onChange={this.onPathChange}
           noOptionsMessage={'Path list not available'}
-        />
-        <InlineFormLabel width={5}>Aggregate</InlineFormLabel>
-        <Select
-          value={aggregateFunctions[aggregate || 'average']}
-          options={aggregateFunctionData}
-          allowCustomValue={false}
-          backspaceRemovesValue={false}
-          isClearable={true}
-          onChange={this.onAggregateChange}
+          width={80}
         />
         <FormField
           label="$source"
@@ -135,6 +132,19 @@ export class QueryEditor extends PureComponent<Props, State> {
           placeholder="Blank = no source filter"
         />
 
+        </div>
+
+        <div className="gf-form">
+        <InlineFormLabel width={7}>Aggregate</InlineFormLabel>
+        <Select
+          value={aggregateFunctions[aggregate || 'average']}
+          options={aggregateFunctionData}
+          allowCustomValue={false}
+          backspaceRemovesValue={false}
+          isClearable={true}
+          onChange={this.onAggregateChange}
+          width={20}
+        />
         <FormField
           label="Multiply by"
           labelWidth={8}
@@ -144,6 +154,8 @@ export class QueryEditor extends PureComponent<Props, State> {
           tooltip="Use for converting units"
           onChange={this.onMultiplierChange}
         />
+        </div>
+
       </div>
     );
   }

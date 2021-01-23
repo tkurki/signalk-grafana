@@ -19,10 +19,71 @@
   "panels": [
     {
       "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 0
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.3.5",
+      "targets": [
+        {
+          "path": "navigation.speedOverGround",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Speed Over Ground",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 10,
         "w": 12,
-        "x": 0,
+        "x": 12,
         "y": 0
       },
       "id": 7,
@@ -82,13 +143,20 @@
       "dashes": false,
       "datasource": "test",
       "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 6,
       "gridPos": {
         "h": 10,
         "w": 12,
-        "x": 12,
-        "y": 0
+        "x": 0,
+        "y": 4
       },
       "hiddenSeries": false,
       "id": 2,
@@ -105,9 +173,10 @@
       "linewidth": 1,
       "nullPointMode": "null",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "7.3.5",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -117,14 +186,16 @@
       "steppedLine": false,
       "targets": [
         {
+          "aggregate": "average",
           "constant": 6.9,
-          "context": "urn:mrn:imo:mmsi:230029970",
+          "context": "",
           "multiplier": 1.94384,
           "path": "navigation.speedThroughWater",
           "queryText": "huuh",
           "refId": "A"
         },
         {
+          "aggregate": "average",
           "multiplier": 1.94384,
           "path": "navigation.speedOverGround",
           "refId": "B"
@@ -173,15 +244,15 @@
     }
   ],
   "refresh": false,
-  "schemaVersion": 21,
+  "schemaVersion": 26,
   "style": "dark",
   "tags": [],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "2019-07-21T12:00:00.000Z",
-    "to": "2019-07-22T12:00:00.000Z"
+    "from": "now-15m",
+    "to": "now"
   },
   "timepicker": {
     "refresh_intervals": [
@@ -198,7 +269,7 @@
     ]
   },
   "timezone": "",
-  "title": "Demo Dashboard",
+  "title": "Demo Signal K Data",
   "uid": "yNCd4iYWk",
   "version": 1
 }

@@ -151,24 +151,26 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
 
   doQuery(options: DataQueryRequest<SignalKQuery>, series: DataSeries[], subscriber: Subscriber<DataQueryResponse>) {
     fetch(this.getHistoryUrl(options))
-      .then(response => response.json())
+      .then(response => (response.ok ? response.json() : null))
       .then((result: HistoryResult) => {
-        result.data.forEach(row => {
-          const ts = new Date(row[0]);
-          series.forEach((serie, i) => {
-            let value = row[i + 1];
-            if (typeof value === 'number') {
-              value = value * (options.targets[i].multiplier === undefined ? 1 : options.targets[i].multiplier);
-            }
-            serie.dataframe.addHistoryData(ts, value);
+        if (result) {
+          result.data.forEach(row => {
+            const ts = new Date(row[0]);
+            series.forEach((serie, i) => {
+              let value = row[i + 1];
+              if (typeof value === 'number') {
+                value = value * (options.targets[i].multiplier === undefined ? 1 : options.targets[i].multiplier);
+              }
+              serie.dataframe.addHistoryData(ts, value);
+            });
           });
-        });
-        series.forEach(serie => {
-          subscriber.next({
-            data: [serie.dataframe],
-            key: serie.key,
+          series.forEach(serie => {
+            subscriber.next({
+              data: [serie.dataframe],
+              key: serie.key,
+            });
           });
-        });
+        }
       });
   }
 

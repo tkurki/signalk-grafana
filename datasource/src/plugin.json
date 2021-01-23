@@ -1,7 +1,7 @@
 {
   "type": "datasource",
-  "name": "sk-datasource",
-  "id": "signalk-sk-datasource",
+  "name": "Signal K",
+  "id": "signalk-datasource",
   "metrics": true,
   "info": {
     "description": "Signal K datasource (streaming & historical data)",

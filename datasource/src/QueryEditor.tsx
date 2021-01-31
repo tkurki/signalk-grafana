@@ -165,12 +165,16 @@ export class QueryEditor extends PureComponent<Props, State> {
 }
 
 const getPathOptions = (hostname: string): Promise<Array<SelectableValue<string>>> => {
-  return fetch(`http://${hostname}/signalk/v1/flat/self/keys`)
+  return fetch(`http://${hostname}/signalk/v1/flat/self/keys`, {
+    credentials: 'include',
+  })
     .then(res => res.json())
     .then((paths: string[]) => {
       const validPathPromises: Array<Promise<string | void>> = paths.map(path => {
         const metaPath = `http://${hostname}/signalk/v1/api/vessels/self/${path.split('.').join('/')}/meta`;
-        return fetch(metaPath)
+        return fetch(metaPath, {
+          credentials: 'include',
+        })
           .then(res =>
             res.status === 200
               ? res
@@ -194,10 +198,7 @@ const getPathOptions = (hostname: string): Promise<Array<SelectableValue<string>
 
 const fetchContexts = (options: DataQueryRequest<SignalKQuery>) =>
   fetch(getContextsUrl(options.range || undefined), {
-    mode: 'cors',
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-    },
+    credentials: 'include',
   })
     .then(res => res.json())
     .then(toLabelValues);

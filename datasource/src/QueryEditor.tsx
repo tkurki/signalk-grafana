@@ -1,4 +1,4 @@
-import { InlineField, InlineFieldRow, InlineFormLabel, Input, LegacyForms, VerticalGroup } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
 
 import defaults from 'lodash/defaults';
 
@@ -7,8 +7,6 @@ import { Select } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue, DataQueryRequest, TimeRange } from '@grafana/data';
 import { DataSource, QueryListener } from './DataSource';
 import { SignalKDataSourceOptions, defaultQuery, SignalKQuery } from './types';
-
-const { FormField } = LegacyForms;
 
 type Props = QueryEditorProps<DataSource, SignalKQuery, SignalKDataSourceOptions>;
 
@@ -155,7 +153,7 @@ export class QueryEditor extends PureComponent<Props, State> {
               css={''}
               label="Multiply by"
               value={typeof multiplier === 'number' ? multiplier : 1}
-              width={8}
+              width={20}
               type="number"
               onChange={this.onMultiplierChange}
             />
@@ -178,7 +176,7 @@ const getPathOptions = (hostname: string): Promise<Array<SelectableValue<string>
               ? res
                   .json()
                   .then(meta => (meta.units ? Promise.resolve(path) : Promise.resolve(undefined)))
-                  .catch(err => Promise.resolve(undefined))
+                  .catch(() => Promise.resolve(undefined))
               : Promise.resolve(undefined)
           )
           .catch(err => {

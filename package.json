@@ -6,16 +6,16 @@
     "build": "grafana-toolkit plugin:build",
     "test": "grafana-toolkit plugin:test",
     "dev": "grafana-toolkit plugin:dev",
-    "watch": "concurrently --kill-others \"grafana-toolkit plugin:dev --watch\" \"docker run  --rm -p 3002:3000 -e \"GF_SECURITY_ADMIN_PASSWORD=secret\" -v `pwd`:/var/lib/grafana/plugins/sk-datasource  -v `pwd`/:/etc/grafana/provisioning/datasources -v `pwd`/dashboards:/etc/grafana/provisioning/dashboards grafana/grafana:6.5.2\"",
+    "watch": "concurrently --kill-others \"grafana-toolkit plugin:dev --watch\" \"docker run  --rm -p 3002:3000 -e \"GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=signalk-datasource\" -e \"GF_SECURITY_ADMIN_PASSWORD=secret\" -v `pwd`:/var/lib/grafana/plugins/sk-datasource  -v `pwd`/:/etc/grafana/provisioning/datasources -v `pwd`/dashboards:/etc/grafana/provisioning/dashboards grafana/grafana:8.0.3\"",
     "docker:build": "yarn build && docker buildx build --platform linux/amd64 -t tkurki/grafana-signalk:latest --load .",
     "docker:push": "yarn build && (((! docker buildx ls  | grep -q multibuilder) && docker buildx create --name multibuilder) || docker buildx use multibuilder) && docker buildx build --platform linux/amd64,linux/arm/v7 -t tkurki/grafana-signalk:latest --push ."
   },
   "author": "teppo.kurki@iki.fi",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@grafana/data": "next",
-    "@grafana/toolkit": "next",
-    "@grafana/ui": "next",
+    "@grafana/data": "^8.0.3",
+    "@grafana/toolkit": "^8.0.3",
+    "@grafana/ui": "^8.0.3",
     "@types/lodash": "latest",
     "concurrently": "^5.0.2"
   }

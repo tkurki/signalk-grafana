@@ -8,6 +8,7 @@
   "metrics": true,
   "annotations": false,
   "alerting": false,
+  "streaming": true,
   "info": {
     "description": "Signal K datasource",
     "author": {

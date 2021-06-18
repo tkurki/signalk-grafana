@@ -1,5 +1,5 @@
 import React, { PureComponent, ChangeEvent } from 'react';
-import { FormField } from '@grafana/ui';
+import { LegacyForms } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { SignalKDataSourceOptions } from './types';
 
@@ -24,7 +24,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     return (
       <div className="gf-form-group">
         <div className="gf-form">
-          <FormField
+          <LegacyForms.FormField
             label="Server address"
             labelWidth={10}
             inputWidth={20}

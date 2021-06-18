@@ -1,4 +1,12 @@
-import { DataQueryRequest, DataQueryResponse, DataSourceApi, DataSourceInstanceSettings, FieldType, CircularDataFrame } from '@grafana/data';
+import {
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  FieldType,
+  CircularDataFrame,
+  LoadingState,
+} from '@grafana/data';
 
 import { SignalKQuery, SignalKDataSourceOptions } from './types';
 import { Observable } from 'rxjs';
@@ -17,9 +25,9 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
   }
 
   query(options: DataQueryRequest<SignalKQuery>): Observable<DataQueryResponse> {
-    return new Observable<DataQueryResponse>(subscriber => {
+    return new Observable<DataQueryResponse>((subscriber) => {
       const maxDataPoints = options.maxDataPoints || 1000;
-      const intervals: number[] = [];
+      const intervals: NodeJS.Timeout[] = [];
 
       const pathValueHandlers: Array<(pv: PathValue, update: any) => void> = options.targets.map((target, i) => {
         const data = new CircularDataFrame({
@@ -30,18 +38,20 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
         data.refId = target.refId;
         data.name = target.path;
         data.addField({ name: 'time', type: FieldType.time });
-        data.addField({ name: `${target.path}${target.dollarsource ? `$${target.dollarsource}` : ''}`, type: FieldType.number });
-
-        const addNextRow = (value: number, time: number) => {
-          data.fields[0].values.add(time);
-          data.fields[1].values.add(value);
-        };
+        const dataFieldName = `${target.path}${target.dollarsource ? `$${target.dollarsource}` : ''}` 
+        data.addField({
+          name: dataFieldName,
+          type: FieldType.number,
+        });
 
         const pushNextEvent = (value: number) => {
-          addNextRow(value * (target.multiplier || 1), Date.now());
+          const datum: any = {time: Date.now()}
+          datum[dataFieldName] = value * (target.multiplier || 1)
+          data.add(datum)
           subscriber.next({
             data: [data],
             key: target.refId,
+            state: LoadingState.Streaming
           });
         };
         //push empty data so that the values are registered always in order
@@ -80,13 +90,13 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
       });
 
       const ws = new ReconnectingWebsocket(`ws://${this.hostname}/signalk/v1/stream`);
-      ws.onmessage = event => {
+      ws.onmessage = (event) => {
         const msg = JSON.parse(event.data);
         if (msg.updates) {
           msg.updates.forEach((update: any) => {
             if (update.values) {
               update.values.forEach((pathValue: any) => {
-                pathValueHandlers.forEach(pm => pm(pathValue, update));
+                pathValueHandlers.forEach((pm) => pm(pathValue, update));
               });
             }
           });
@@ -95,7 +105,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
 
       return () => {
         ws.close();
-        intervals.forEach(interval => clearInterval(interval));
+        intervals.forEach((interval) => clearInterval(interval));
       };
     });
   }
@@ -103,7 +113,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
   async testDatasource() {
     return new Promise((resolve, reject) => {
       const ws = new WebSocket(`ws://${this.hostname}/signalk/v1/stream?subscribe=none`);
-      ws.onmessage = event => {
+      ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
           //per schema: "required": ["version","roles"]
@@ -124,7 +134,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
           message: 'Did not receive Signal K hello message',
         });
       };
-      ws.onerror = error => {
+      ws.onerror = (error) => {
         console.error(error);
         reject({
           status: 'failure',

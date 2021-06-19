@@ -133,11 +133,11 @@ export default class ReconnectingWebSocket {
         }, this.reconnectInterval);
       }
     };
-    this.ws.onmessage = event => {
+    this.ws.onmessage = (event) => {
       this.log('ReconnectingWebSocket', 'onmessage', this.url, event.data);
       this.onmessage(event);
     };
-    this.ws.onerror = event => {
+    this.ws.onerror = (event) => {
       this.log('ReconnectingWebSocket', 'onerror', this.url, event);
       this.onerror(event as ErrorEvent);
     };

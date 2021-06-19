@@ -5,14 +5,14 @@ export default class ValidatingBuffer<T> {
   constructor(validate: (values: T[]) => boolean, callback: (t?: T) => void) {
     this.validate = validate;
     this.callback = callback;
-    this.buffer = Array<T>();
+    this.buffer = [] as T[];
   }
 
   push(t: T) {
     if (this.buffer.length === 3) {
       this.callback(this.buffer.pop());
     }
-    if (this.buffer.length === 2 && !this.validate([t, ...this.buffer])) {
+    if (this.buffer.length === 2 && !this.validate([t].concat(this.buffer))) {
       this.buffer.shift();
     }
     this.buffer.unshift(t);

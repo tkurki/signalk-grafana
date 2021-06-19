@@ -3,6 +3,7 @@
   "name": "Signal K",
   "id": "signalk-datasource",
   "metrics": true,
+  "streaming": true,
   "info": {
     "description": "Signal K datasource (streaming & historical data)",
     "author": {

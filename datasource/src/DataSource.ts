@@ -3,6 +3,7 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
+  LoadingState,
   RawTimeRange,
 } from '@grafana/data';
 
@@ -58,54 +59,55 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
     }
   }
 
-  addPathValueHandler(handler: PathValueHandler) {
-    this.pathValueHandlers.push(handler);
-  }
+  // addPathValueHandler(handler: PathValueHandler) {
+  //   this.pathValueHandlers.push(handler);
+  // }
 
   ensureWsIsOpen() {
     if (this.ws) {
       return;
     }
     this.ws = new ReconnectingWebsocket(`ws://${this.hostname}/signalk/v1/stream`);
-    this.ws.onmessage = event => {
+    this.ws.onmessage = (event) => {
       const msg = JSON.parse(event.data);
-      this.pathValueHandlers.forEach(h => {
+      this.pathValueHandlers.forEach((h) => {
         try {
           if (msg.updates) {
             msg.updates.forEach((update: any) => {
               if (update.values) {
                 update.values.forEach((pathValue: any) => {
-                  this.pathValueHandlers.forEach(handler => handler(pathValue, update));
+                  this.pathValueHandlers.forEach((handler) => handler(pathValue, update));
                 });
               }
             });
           }
         } catch (e) {
-          console.log(e.message);
+          console.error(e.message);
         }
       });
     };
   }
 
   query(options: DataQueryRequest<SignalKQuery>): Observable<DataQueryResponse> {
-    this.listeners.forEach(l => l.onQuery(options));
-    this.pathValueHandlers = [];
+    this.listeners.forEach((l) => l.onQuery(options));
+    // this.pathValueHandlers = [];
 
     if (this.idleInterval) {
       clearInterval(this.idleInterval);
       this.idleInterval = undefined;
     }
 
-    const result = new Observable<DataQueryResponse>(subscriber => {
+    const result = new Observable<DataQueryResponse>((subscriber) => {
       let lastStreamingValueTimestamp = 0;
 
-      const series: DataSeries[] = options.targets.map(target => {
+      const series: DataSeries[] = options.targets.map((target) => {
         //push empty data so that the values are registered always in order
         //otherwise the path that produces data first will be the first
         //series in grafana, making the order undeterministic
         subscriber.next({
           data: [],
           key: target.refId,
+          state: LoadingState.Streaming,
         });
 
         const data = new DualDataFrame(`${target.path}:${target.aggregate}`, 1000);
@@ -116,6 +118,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
           subscriber.next({
             data: [data],
             key: target.refId,
+            state: LoadingState.Streaming,
           });
         };
 
@@ -134,14 +137,14 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
         this.ensureWsIsOpen();
 
         //if there are no updates advance the time with timer
-        this.idleInterval = (setInterval(() => {
+        this.idleInterval = setInterval(() => {
           if (Date.now() - lastStreamingValueTimestamp > 1000) {
             subscriber.next({
               data: [series[0].dataframe],
               key: series[0].dataframe.refId,
             });
           }
-        }, 1000) as unknown) as number;
+        }, 1000) as unknown as number;
       }
 
       this.doQuery(options, series, subscriber);
@@ -151,10 +154,10 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
 
   doQuery(options: DataQueryRequest<SignalKQuery>, series: DataSeries[], subscriber: Subscriber<DataQueryResponse>) {
     fetch(this.getHistoryUrl(options))
-      .then(response => (response.ok ? response.json() : null))
+      .then((response) => (response.ok ? response.json() : null))
       .then((result: HistoryResult) => {
         if (result) {
-          result.data.forEach(row => {
+          result.data.forEach((row) => {
             const ts = new Date(row[0]);
             series.forEach((serie, i) => {
               let value = row[i + 1];
@@ -164,7 +167,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
               serie.dataframe.addHistoryData(ts, value);
             });
           });
-          series.forEach(serie => {
+          series.forEach((serie) => {
             subscriber.next({
               data: [serie.dataframe],
               key: serie.key,
@@ -175,7 +178,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
   }
 
   getHistoryUrl(options: DataQueryRequest<SignalKQuery>) {
-    const paths = options.targets.map(target => `${target.path}:${target.aggregate || 'average'}`).join(',');
+    const paths = options.targets.map((target) => `${target.path}:${target.aggregate || 'average'}`).join(',');
     if (!options.range || !options.range.from || !options.range.to || !options.intervalMs) {
       throw new Error('Valid range and intervalMs required');
     }
@@ -188,14 +191,14 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
       resolution: (options.intervalMs / 1000).toString(),
     };
     const url: URL = new URL(`http://${this.hostname}/signalk/v1/history/values`);
-    Object.keys(queryParams).forEach(key => url.searchParams.append(key, queryParams[key]));
+    Object.keys(queryParams).forEach((key) => url.searchParams.append(key, queryParams[key]));
     return url.toString();
   }
 
   async testDatasource() {
     const wsPromise = new Promise((resolve, reject) => {
       const ws = new WebSocket(`ws://${this.hostname}/signalk/v1/stream?subscribe=none`);
-      ws.onmessage = event => {
+      ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
           //per schema: "required": ["version","roles"]
@@ -216,7 +219,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
           message: 'Did not receive Signal K hello message',
         });
       };
-      ws.onerror = error => {
+      ws.onerror = (error) => {
         console.error(error);
         reject({
           status: 'failure',
@@ -225,7 +228,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
       };
     });
 
-    const apiPromise = fetch(`http://${this.hostname}/signalk/v1/history/values`).then(response => {
+    const apiPromise = fetch(`http://${this.hostname}/signalk/v1/history/values`).then((response) => {
       if (response.status === 400) {
         return {
           status: 'success',
@@ -235,8 +238,8 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
       throw new Error(`History endpoint returned ${response.status}`);
     });
 
-    return Promise.all([wsPromise, apiPromise].map((p: Promise<any>) => p.catch((e: Error) => e))).then(statuses => {
-      if (statuses.some(status => status.status === 'success')) {
+    return Promise.all([wsPromise, apiPromise].map((p: Promise<any>) => p.catch((e: Error) => e))).then((statuses) => {
+      if (statuses.some((status) => status.status === 'success')) {
         return Promise.resolve({
           status: 'success',
           message: 'Success',

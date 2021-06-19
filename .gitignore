@@ -26,3 +26,7 @@ work/
 ci/
 e2e-results/
 
+package-lock.json
+trackmap/package-lock.json
+datasource/package-lock.json
+jest.config.js

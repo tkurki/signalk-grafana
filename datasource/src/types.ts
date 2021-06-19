@@ -1,8 +1,10 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
 export interface SignalKQuery extends DataQuery {
+  context: string;
   path: string;
   multiplier: number;
+  aggregate: string;
   dollarsource?: string;
 }
 

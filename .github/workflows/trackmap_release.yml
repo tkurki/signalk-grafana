@@ -1,7 +1,7 @@
 on:
   push:
     tags:
-      - 'plugin_*'
+      - 'trackmap_*'
       
 jobs:
   build:
@@ -21,14 +21,13 @@ jobs:
           node-version: 14.x
       - run: npm install
       - run: npm run build --if-present
-      - run: mv dist tkurki-trackmap
-      - name: Create zip file
-        uses: thedoctor0/zip-release@master
-        with:
-          path: 'tkurki-trackmap/'
-          filename: tkurki-trackmap-${{ steps.vars.outputs.tag }}.zip
+      - run: mv dist signalk-trackmap
+      - run: zip -r signalk-trackmap-${{ steps.vars.outputs.tag }}.zip signalk-trackmap
+      - run: ls
       - name: Upload Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "*.zip"
+          artifacts: trackmap/signalk-trackmap-${{ steps.vars.outputs.tag }}.zip
           token: ${{ secrets.GITHUB_TOKEN }}
+
+# git tag -d plugin_v0.0.1 && git tag plugin_v0.0.1 && git push --delete origin plugin_v0.0.1 && git push --tags

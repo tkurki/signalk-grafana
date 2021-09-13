@@ -153,7 +153,9 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
   }
 
   doQuery(options: DataQueryRequest<SignalKQuery>, series: DataSeries[], subscriber: Subscriber<DataQueryResponse>) {
-    fetch(this.getHistoryUrl(options))
+    fetch(this.getHistoryUrl(options), {
+      credentials: 'include'
+    })
       .then((response) => (response.ok ? response.json() : null))
       .then((result: HistoryResult) => {
         if (result) {
@@ -228,7 +230,9 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
       };
     });
 
-    const apiPromise = fetch(`http://${this.hostname}/signalk/v1/history/values`).then((response) => {
+    const apiPromise = fetch(`http://${this.hostname}/signalk/v1/history/values`, {
+      credentials: 'include'
+    }).then((response) => {
       if (response.status === 400) {
         return {
           status: 'success',

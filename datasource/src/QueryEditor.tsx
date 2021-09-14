@@ -12,11 +12,17 @@ type Props = QueryEditorProps<DataSource, SignalKQuery, SignalKDataSourceOptions
 interface State {
   paths: Array<SelectableValue<string>>;
   contexts: Array<SelectableValue<string>>;
+  context: string;
 }
 
 interface AggregateFunctionValue {
   label: string;
   value: string;
+}
+
+interface PathWithMeta {
+  path: string;
+  meta: object;
 }
 
 type AggregateFunctionValueMap = { [key: string]: AggregateFunctionValue };
@@ -37,17 +43,20 @@ const aggregateFunctions: AggregateFunctionValueMap = aggregateFunctionData.redu
 export class QueryEditor extends PureComponent<Props, State> {
   queryListener: QueryListener = {
     onQuery: (options: DataQueryRequest<SignalKQuery>) => {
-      fetchContexts(options).then((contexts) => {
+      console.log('fetching');
+      fetchContexts(this.props.datasource.hostname, options).then((contexts) => {
         contexts.unshift({
           value: 'vessels.self',
           label: 'self',
         });
         this.setState({ contexts });
       });
+      fetchPaths(this.props.datasource.hostname, options, this.state?.context).then((paths) =>
+        this.setState({ paths })
+      );
     },
   };
   componentDidMount() {
-    getPathOptions(this.props.datasource.hostname).then((paths) => this.setState({ paths }));
     this.props.datasource.addListener(this.queryListener);
   }
   componentWillUnmount() {
@@ -56,7 +65,9 @@ export class QueryEditor extends PureComponent<Props, State> {
 
   onContextChange = (item: SelectableValue<string>) => {
     const { onChange, query, onRunQuery } = this.props;
-    onChange({ ...query, context: item && item.value ? item.value : '' });
+    const context = item && item.value ? item.value : '';
+    onChange({ ...query, context });
+    this.setState({ context });
     onRunQuery();
   };
 
@@ -91,6 +102,7 @@ export class QueryEditor extends PureComponent<Props, State> {
   render() {
     const query = defaults(this.props.query, defaultQuery);
     const { path, multiplier, dollarsource, context, aggregate } = query;
+    const pathLabels = this.state && this.state.paths ? this.state.paths.map(({ path }) => path).map(toLabelValue) : [];
 
     return (
       <div>
@@ -113,7 +125,7 @@ export class QueryEditor extends PureComponent<Props, State> {
           <InlineField labelWidth={14} label="Path">
             <Select
               value={{ label: path, value: path }}
-              options={this.state ? this.state.paths : []}
+              options={pathLabels}
               allowCustomValue={true}
               backspaceRemovesValue={true}
               isClearable={true}
@@ -163,13 +175,17 @@ export class QueryEditor extends PureComponent<Props, State> {
   }
 }
 
-const getPathOptions = (hostname: string): Promise<Array<SelectableValue<string>>> => {
-  return fetch(`http://${hostname}/signalk/v1/flat/self/keys`, {
+const fetchPaths = (
+  hostname: string,
+  options: DataQueryRequest<SignalKQuery>,
+  context: string
+): Promise<PathWithMeta[]> => {
+  return fetch(getPathsUrl(hostname, options.range, context), {
     credentials: 'include',
   })
     .then((res) => res.json())
     .then((paths: string[]) => {
-      const validPathPromises: Array<Promise<string | void>> = paths.map((path) => {
+      const validPathPromises: Array<Promise<PathWithMeta | void>> = paths.map((path) => {
         const metaPath = `http://${hostname}/signalk/v1/api/vessels/self/${path.split('.').join('/')}/meta`;
         return fetch(metaPath, {
           credentials: 'include',
@@ -178,38 +194,56 @@ const getPathOptions = (hostname: string): Promise<Array<SelectableValue<string>
             res.status === 200
               ? res
                   .json()
-                  .then((meta) => (meta.units ? Promise.resolve(path) : Promise.resolve(undefined)))
-                  .catch(() => Promise.resolve(undefined))
-              : Promise.resolve(undefined)
+                  .then((meta) => ({ path, meta }))
+                  .catch((err) => {
+                    console.log(err);
+                    return Promise.resolve(undefined);
+                  })
+              : Promise.resolve({ path, meta: {} })
           )
           .catch((err) => {
             console.log(err);
             return Promise.resolve(undefined);
           });
       });
-      return Promise.all(validPathPromises).then(
-        (pathOrUndefinedA: Array<string | void>): string[] => pathOrUndefinedA.filter((p) => p) as string[]
+      return Promise.all(validPathPromises).then((pathOrUndefinedA: Array<PathWithMeta | void>): PathWithMeta[] =>
+        pathOrUndefinedA.flatMap((f) => (!!f ? [f] : []))
       );
     })
-    .then(toLabelValues)
-    .catch(() => []);
+    .catch((err) => {
+      console.log(err);
+      return [];
+    });
 };
 
-const fetchContexts = (options: DataQueryRequest<SignalKQuery>) =>
-  fetch(getContextsUrl(options.range || undefined), {
-    credentials: 'include',
-  })
-    .then((res) => res.json())
-    .then(toLabelValues);
-
-const getContextsUrl = (range?: TimeRange) => {
+const getPathsUrl = (hostname: string, range?: TimeRange, context?: string) => {
   if (!range) {
-    throw new Error('Valid range required for fetching contexts');
+    throw new Error('Valid range required for fetching paths');
   }
   const queryParams: { [k: string]: string } = { from: range.from.toISOString(), to: range.to.toISOString() };
-  const url: URL = new URL(`http://localhost:3000/signalk/v1/history/contexts`);
+  if (context) {
+    queryParams.context = context;
+  }
+  const url: URL = new URL(`http://${hostname}/signalk/v1/history/paths`);
   Object.keys(queryParams).forEach((key) => url.searchParams.append(key, queryParams[key]));
   return url.toString();
 };
 
-const toLabelValues = (values: string[]) => values.map((s) => ({ label: s, value: s }));
+const fetchContexts = (hostname: string, options: DataQueryRequest<SignalKQuery>) =>
+  fetch(getContextsUrl(hostname, options.range || undefined), {
+    credentials: 'include',
+  })
+    .then((res) => res.json())
+    .then((contexts) => contexts.map(toLabelValue));
+
+const getContextsUrl = (hostname: string, range?: TimeRange) => {
+  if (!range) {
+    throw new Error('Valid range required for fetching contexts');
+  }
+  const queryParams: { [k: string]: string } = { from: range.from.toISOString(), to: range.to.toISOString() };
+  const url: URL = new URL(`http://${hostname}/signalk/v1/history/contexts`);
+  Object.keys(queryParams).forEach((key) => url.searchParams.append(key, queryParams[key]));
+  return url.toString();
+};
+
+const toLabelValue = (s: string) => ({ label: s, value: s });

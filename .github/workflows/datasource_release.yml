@@ -1,0 +1,33 @@
+on:
+  push:
+    tags:
+      - 'datasource_*'
+      
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: datasource
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set output
+        id: vars
+        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+      - name: Use Node.js 
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14.x
+      - run: npm install
+      - run: npm run build --if-present
+      - run: mv dist signalk-datasource
+      - run: zip -r signalk-datasource-${{ steps.vars.outputs.tag }}.zip signalk-datasource
+      - run: ls
+      - name: Upload Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: datasource/signalk-datasource-${{ steps.vars.outputs.tag }}.zip
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+# git tag -d plugin_v0.0.1 && git tag plugin_v0.0.1 && git push --delete origin plugin_v0.0.1 && git push --tags

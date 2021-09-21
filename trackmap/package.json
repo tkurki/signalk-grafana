@@ -15,9 +15,11 @@
     "@grafana/runtime": "^8.0.0",
     "@grafana/toolkit": "8.0.2",
     "@grafana/ui": "^8.0.0",
+    "@types/d3-scale-chromatic": "^3.0.0",
     "@types/geojson": "^7946.0.7",
     "@types/react-leaflet": "^2.5.0",
     "concurrently": "^5.1.0",
+    "d3-scale-chromatic": "^3.0.0",
     "leaflet": "^1.6.0",
     "memoize-one": "^5.1.1",
     "react-leaflet": "^2.6.1"

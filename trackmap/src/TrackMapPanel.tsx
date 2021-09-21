@@ -3,6 +3,7 @@ import { PanelProps, AbsoluteTimeRange } from '@grafana/data';
 import { SystemJS } from '@grafana/runtime';
 import { TrackMapOptions } from 'types';
 import memoize from 'memoize-one';
+import { interpolateRdYlBu } from 'd3-scale-chromatic'
 
 interface Props extends PanelProps<TrackMapOptions> {}
 
@@ -13,6 +14,7 @@ interface State {
 interface PositionWithTime {
   timestamp: any;
   position: LatLng;
+  value?: number;
 }
 
 interface MapParams {
@@ -22,7 +24,8 @@ interface MapParams {
   getTimeframeByBounds: (b: LatLngBounds) => AbsoluteTimeRange | null;
 }
 
-import { Map as LeafletMap, GeoJSON, TileLayer, Circle, TileLayerProps } from 'react-leaflet';
+
+import { Map as LeafletMap, GeoJSON, TileLayer, Circle, TileLayerProps, Pane } from 'react-leaflet';
 
 import 'leaflet/dist/leaflet.css';
 import { LineString } from 'geojson';
@@ -49,7 +52,7 @@ export class TrackMapPanel extends PureComponent<Props, State> {
   }
 
   render() {
-    const { bounds, trackGeojson, getTimeframeByBounds } = dataToMapParams(this.props.data);
+    const { bounds, trackGeojson, getTimeframeByBounds, pointsByTime } = dataToMapParams(this.props.data);
     const onBoxZoomEnd = ({ boxZoomBounds }: { boxZoomBounds: LatLngBounds }) => {
       const timeframe = getTimeframeByBounds(boxZoomBounds);
       if (timeframe) {
@@ -61,6 +64,9 @@ export class TrackMapPanel extends PureComponent<Props, State> {
       <LeafletMap onboxzoomend={onBoxZoomEnd} bounds={bounds} style={{ width: '100%', height: '100%' }}>
         {this.props.options.layers.map(toTileLayer)}
         <GeoJSON key={Date.now()} data={trackGeojson} />
+        <Pane style={{zIndex: 999}}>
+          {pointsByTime.map(({position, value}) => <Circle center={position} color={interpolateRdYlBu(Math.min(1, (value || 10) / 10))} radius={2}></Circle>) }
+        </Pane>
         {this.state.currentPoint ? <Circle center={this.state.currentPoint} radius={30} /> : undefined}
       </LeafletMap>
     );
@@ -81,6 +87,7 @@ const dataToMapParams = memoize((data: any): MapParams => {
   let i;
   const positions = data.series[0].fields[1].values;
   const timestamps = data.series[0].fields[0].values;
+  const dataValues = data.series.length > 1 ? data.series[1].fields[1].values : undefined
   let minLat = 90;
   let maxLat = -90;
   let minLng = 180;
@@ -113,7 +120,11 @@ const dataToMapParams = memoize((data: any): MapParams => {
       typeof position[0] === 'number' &&
       typeof position[1] === 'number'
     ) {
-      pointsByTime.push({ timestamp: timestamps.get(i), position: new LatLng(position[1], position[0]) });
+      const timePoint: PositionWithTime = { timestamp: timestamps.get(i), position: new LatLng(position[1], position[0]) }
+      if (dataValues) {
+        timePoint.value = dataValues.get(i);
+      }
+      pointsByTime.push(timePoint);
       validatingBuffer.push(position);
     }
   }

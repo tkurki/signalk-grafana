@@ -1,9 +1,8 @@
 import React, { PureComponent } from 'react';
-import { PanelProps, AbsoluteTimeRange } from '@grafana/data';
-import { SystemJS } from '@grafana/runtime';
+import { PanelProps, AbsoluteTimeRange, LegacyGraphHoverEvent } from '@grafana/data';
 import { TrackMapOptions } from 'types';
 import memoize from 'memoize-one';
-import { interpolateRdYlBu } from 'd3-scale-chromatic'
+import { interpolateRdYlBu } from 'd3-scale-chromatic';
 
 interface Props extends PanelProps<TrackMapOptions> {}
 
@@ -22,11 +21,10 @@ interface MapParams {
   bounds: any;
   pointsByTime: PositionWithTime[];
   getTimeframeByBounds: (b: LatLngBounds) => AbsoluteTimeRange | null;
-  hasDataValues: boolean
+  hasDataValues: boolean;
 }
 
-
-import { Map as LeafletMap, GeoJSON, TileLayer, Circle, TileLayerProps, Pane } from 'react-leaflet';
+import { Map as LeafletMap, GeoJSON, TileLayer, CircleMarker, TileLayerProps, Pane } from 'react-leaflet';
 
 import 'leaflet/dist/leaflet.css';
 import { LineString } from 'geojson';
@@ -34,26 +32,37 @@ import { LatLngBounds, LatLng } from 'leaflet';
 import ValidatingBuffer from 'ValidatingBuffer';
 
 export class TrackMapPanel extends PureComponent<Props, State> {
+  cursorSubscription: any; //RxJs Subscription
   constructor(props: Props) {
     super(props);
-    // props.onChangeTimeRange({from: new Date('2019-01-01').getTime(), to: new Date('2019-10-01').getTime()})
-    SystemJS.load('app/core/app_events').then((appEvents: any) => {
-      appEvents.on('graph-hover', (e: any) => {
-        const currentPoint = this.pointByTime(e.pos.x);
-        if (currentPoint) {
-          this.setState({ currentPoint: currentPoint.position });
-        }
-      });
-    });
     this.state = {};
   }
 
   pointByTime(ts: number) {
+    //FIXME dataToMapParams only when data changes
     return dataToMapParams(this.props.data).pointsByTime.find((pt) => pt.timestamp > ts);
   }
 
+  componentDidMount() {
+    this.cursorSubscription = this.props.eventBus.getStream(LegacyGraphHoverEvent).subscribe({
+      next: (evt) => {
+        const currentPoint = this.pointByTime(evt.payload.point.time);
+        if (currentPoint) {
+          this.setState({ currentPoint: currentPoint.position });
+        }
+      },
+    });
+  }
+
+  componentWillUnmount() {
+    this.cursorSubscription.unsubscribe();
+  }
+
   render() {
-    const { bounds, trackGeojson, getTimeframeByBounds, pointsByTime, hasDataValues } = dataToMapParams(this.props.data);
+    //FIXME dataToMapParams only when data changes
+    const { bounds, trackGeojson, getTimeframeByBounds, pointsByTime, hasDataValues } = dataToMapParams(
+      this.props.data
+    );
     const onBoxZoomEnd = ({ boxZoomBounds }: { boxZoomBounds: LatLngBounds }) => {
       const timeframe = getTimeframeByBounds(boxZoomBounds);
       if (timeframe) {
@@ -65,14 +74,20 @@ export class TrackMapPanel extends PureComponent<Props, State> {
       <LeafletMap onboxzoomend={onBoxZoomEnd} bounds={bounds} style={{ width: '100%', height: '100%' }}>
         {this.props.options.layers.map(toTileLayer)}
         <GeoJSON key={Date.now()} data={trackGeojson} />
-        {
-          hasDataValues && 
-          <Pane style={{zIndex: 999 }}>
-          {pointsByTime.map(({position, value}) => <Circle center={position} color={interpolateRdYlBu(Math.min(1, (value || 10) / 10))} radius={1}></Circle>)
-        }
-      </Pane>
-      }
-        {this.state.currentPoint ? <Circle center={this.state.currentPoint} radius={30} /> : undefined}
+        {hasDataValues && (
+          <Pane style={{ zIndex: 899 }}>
+            {pointsByTime.map(({ position, value }) => (
+              <CircleMarker
+                center={position}
+                color={interpolateRdYlBu(Math.min(1, (value || 10) / 10))}
+                radius={1}
+              ></CircleMarker>
+            ))}
+          </Pane>
+        )}
+        <Pane style={{ zIndex: 999 }}>
+          {this.state.currentPoint ? <CircleMarker center={this.state.currentPoint} radius={5} /> : undefined}
+        </Pane>
       </LeafletMap>
     );
   }
@@ -92,7 +107,7 @@ const dataToMapParams = memoize((data: any): MapParams => {
   let i;
   const positions = data.series[0].fields[1].values;
   const timestamps = data.series[0].fields[0].values;
-  const dataValues = data.series.length > 1 ? data.series[1].fields[1].values : undefined
+  const dataValues = data.series.length > 1 ? data.series[1].fields[1].values : undefined;
   let minLat = 90;
   let maxLat = -90;
   let minLng = 180;
@@ -125,7 +140,10 @@ const dataToMapParams = memoize((data: any): MapParams => {
       typeof position[0] === 'number' &&
       typeof position[1] === 'number'
     ) {
-      const timePoint: PositionWithTime = { timestamp: timestamps.get(i), position: new LatLng(position[1], position[0]) }
+      const timePoint: PositionWithTime = {
+        timestamp: timestamps.get(i),
+        position: new LatLng(position[1], position[0]),
+      };
       if (dataValues) {
         timePoint.value = dataValues.get(i);
       }
@@ -142,7 +160,7 @@ const dataToMapParams = memoize((data: any): MapParams => {
     bounds,
     pointsByTime,
     getTimeframeByBounds: timeframeByBoundsGetter(pointsByTime),
-    hasDataValues: !!dataValues
+    hasDataValues: !!dataValues,
   };
 });
 

@@ -24,7 +24,7 @@ interface MapParams {
   hasDataValues: boolean;
 }
 
-import { Map as LeafletMap, GeoJSON, TileLayer, CircleMarker, TileLayerProps, Pane } from 'react-leaflet';
+import { Map as LeafletMap, GeoJSON, TileLayer, CircleMarker, TileLayerProps, Tooltip, Pane } from 'react-leaflet';
 
 import 'leaflet/dist/leaflet.css';
 import { LineString } from 'geojson';
@@ -81,7 +81,9 @@ export class TrackMapPanel extends PureComponent<Props, State> {
                 center={position}
                 color={interpolateRdYlBu(Math.min(1, (value || 10) / 10))}
                 radius={1}
-              ></CircleMarker>
+              >
+                <Tooltip>{value?.toFixed(1)}</Tooltip>
+              </CircleMarker>
             ))}
           </Pane>
         )}

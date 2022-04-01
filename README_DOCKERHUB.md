@@ -1,15 +1,13 @@
 # Grafana with Signal K Datasource
 
-This Docker image [adds](https://github.com/tkurki/signalk-grafana-datasource/blob/master/Dockerfile) a preinstalled [Signal K streaming datasource](https://github.com/tkurki/signalk-grafana-datasource) to the official [Grafana image](https://hub.docker.com/r/grafana/grafana).
+This Docker image extends the official grafana/grafana image by [adding](https://github.com/tkurki/signalk-grafana/blob/master/Dockerfile) the following unsigned plugins:
+- **Grafana Datasource** that can **stream** real time data from a Signal K server and retrieve historical data via work in progress Signal K **history API**
+- **Trackmap plugin** that can draw own vessel track from data retrieved via Signal K history API
 
-The image has a preconfigured datasource for demo.signalk.org including a demonstration dashboard.
+![image](https://user-images.githubusercontent.com/1049678/129489818-50c711a8-599b-4322-8971-7eb014f1d818.png)
 
-Example invocation:
+Quick start:
+`docker run -d -p 3002:3000 -e GF_AUTH_ANONYMOUS_ENABLED=true -e GF_AUTH_ANONYMOUS_ORG_ROLE=Admin tkurki/signalk-grafana`
 
-```
-docker run -p 3001:3000 -e "GF_SECURITY_ADMIN_PASSWORD=secret" --name=signalk-grafana tkurki/grafana-signalk
-```
-
-Grafana should be then accessible at [http://localhost:3001](http://localhost:3001)
-
+>Note that this will run Grafana with anonymous admin access
 

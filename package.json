@@ -2,10 +2,10 @@
   "private": true,
   "scripts": {
     "build": "yarn wsrun build",
-    "watch": "concurrently --kill-others  \"yarn wsrun watch\" \"yarn docker:run\"",
-    "docker:run": "docker run --rm -p 3002:3000 -e \"GF_AUTH_ANONYMOUS_ENABLED=true\" -e \"GF_AUTH_ANONYMOUS_ORG_ROLE=Admin\" -e \"GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=signalk-datasource,signalk-trackmap\" -v `pwd`/datasource/dist:/var/lib/grafana/plugins/sk-datasource -v `pwd`/trackmap/dist:/var/lib/grafana/plugins/trackmap  -v `pwd`/:/etc/grafana/provisioning/datasources -v `pwd`/dashboards:/etc/grafana/provisioning/dashboards grafana/grafana:8.0.3",
-    "docker:build": "yarn build && docker buildx build --platform linux/amd64 -t tkurki/grafana-signalk:latest --load .",
-    "docker:push": "yarn build && (((! docker buildx ls  | grep -q multibuilder) && docker buildx create --name multibuilder) || docker buildx use multibuilder) && docker buildx build --platform linux/amd64,linux/arm/v7 -t tkurki/grafana-signalk:latest --push ."
+    "watch": "concurrently --kill-others  \"yarn wsrun watch\" \"yarn docker:run:dev\"",
+    "docker:run:dev": "docker run --rm -p 3002:3000 -e \"GF_AUTH_ANONYMOUS_ENABLED=true\" -e \"GF_AUTH_ANONYMOUS_ORG_ROLE=Admin\" -e \"GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=signalk-datasource,signalk-trackmap\" -v `pwd`/datasource/dist:/var/lib/grafana/plugins/sk-datasource -v `pwd`/trackmap/dist:/var/lib/grafana/plugins/trackmap  -v `pwd`/:/etc/grafana/provisioning/datasources -v `pwd`/dashboards:/etc/grafana/provisioning/dashboards grafana/grafana:8.0.3",
+    "docker:build": "docker buildx build -t tkurki/signalk-grafana:latest --load .",
+    "docker:run:image": "docker run --rm -p 3002:3000 -e \"GF_AUTH_ANONYMOUS_ENABLED=true\" -e \"GF_AUTH_ANONYMOUS_ORG_ROLE=Admin\" -v `pwd`/:/etc/grafana/provisioning/datasources -v `pwd`/dashboards:/etc/grafana/provisioning/dashboards tkurki/signalk-grafana" 
   },
   "author": "teppo.kurki@iki.fi",
   "license": "Apache-2.0",

@@ -141,7 +141,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "test",
+      "datasource": null,
       "description": "",
       "fieldConfig": {
         "defaults": {

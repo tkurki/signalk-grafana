@@ -76,8 +76,9 @@ export class TrackMapPanel extends PureComponent<Props, State> {
         <GeoJSON key={Date.now()} data={trackGeojson} />
         {hasDataValues && (
           <Pane style={{ zIndex: 899 }}>
-            {pointsByTime.map(({ position, value }) => (
+            {pointsByTime.map(({ position, value }, i) => (
               <CircleMarker
+                key={i}
                 center={position}
                 color={interpolateRdYlBu(Math.min(1, (value || 10) / 10))}
                 radius={1}

@@ -1,4 +1,6 @@
 FROM grafana/grafana:8.0.3
-COPY dist /var/lib/grafana/plugins/sk-datasource/dist
-COPY datasource.yml /etc/grafana/provisioning/datasources
-COPY dashboards /etc/grafana/provisioning/dashboards
+
+ENV GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=signalk-datasource,signalk-trackmap
+
+COPY datasource/dist /var/lib/grafana/plugins/sk-datasource
+COPY trackmap/dist /var/lib/grafana/plugins/trackmap

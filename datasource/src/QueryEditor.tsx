@@ -136,7 +136,6 @@ export class QueryEditor extends PureComponent<Props, State> {
           </InlineField>
           <InlineField labelWidth={14} label="$source">
             <Input
-              css={''}
               width={12}
               name={'$source'}
               id={'$source'}
@@ -161,7 +160,6 @@ export class QueryEditor extends PureComponent<Props, State> {
           </InlineField>
           <InlineField labelWidth={14} label="Multiply by">
             <Input
-              css={''}
               label="Multiply by"
               value={typeof multiplier === 'number' ? multiplier : 1}
               width={20}

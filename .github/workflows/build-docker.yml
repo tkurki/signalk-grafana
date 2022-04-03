@@ -22,8 +22,8 @@ jobs:
       - name: Build trackmap
         run: |
           cd trackmap
-          yarn list
           yarn install
+          yarn list
           yarn build
 
       - name: Build datasource

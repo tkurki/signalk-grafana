@@ -18,7 +18,9 @@ Then
 - add a Dashboard and Panel with the default `self` context and `navigation.speedOverGround`
 - change the time range to _Last 5 minutes_ so that the streaming updates are clearly visible
 
-demo.signalk.org does not support the history API, so you get only streaming updates and the history is not retained over dashboard reloads. [InfluxDb plugin](https://github.com/tkurki/signalk-to-influxdb) implements the history API so the easiest way to try also history is to run a local Signal K server with InfluxDb plugin enabled with data playback enabled.
+demo.signalk.org does not support the history API, so you get only streaming updates and the history is not retained over dashboard reloads. 
+
+[InfluxDb plugin](https://github.com/tkurki/signalk-to-influxdb) implements the history API so the easiest way to try also history is to run a local Signal K server with some data the updates and InfluxDb plugin enabled. That should give you both access to historical data *and* streaming updates when you select a timerange up to _now_ (_last X minutes_ etc).
 
 ## Details
 

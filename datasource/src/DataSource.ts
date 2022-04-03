@@ -81,7 +81,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
               }
             });
           }
-        } catch (e) {
+        } catch (e: any) {
           console.error(e.message);
         }
       });
@@ -212,7 +212,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
             });
             return;
           }
-        } catch (e) {
+        } catch (e: any) {
           console.error(e.message);
         }
         console.error(event);

@@ -9,9 +9,9 @@ This repo contains
 
 The quickes way to try it out is to launch a prebuilt image from Docker Hub:
 
-`docker run -d -p 3002:3000 -e GF_AUTH_ANONYMOUS_ENABLED=true -e GF_AUTH_ANONYMOUS_ORG_ROLE=Admin tkurki/signalk-grafana`
+`docker run -d -p 3002:3000 -e GF_AUTH_ANONYMOUS_ENABLED=true -e GF_AUTH_ANONYMOUS_ORG_ROLE=Admin tkurki/signalk-grafana:master`
 
->Note that this will run Grafana with anonymous admin access on
+>Note that this will run Grafana with anonymous admin access
 
 Then
 - add a Signal K data source for `demo.signalk.org` as default

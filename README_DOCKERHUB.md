@@ -7,7 +7,7 @@ This Docker image extends the official grafana/grafana image by [adding](https:/
 ![image](https://user-images.githubusercontent.com/1049678/129489818-50c711a8-599b-4322-8971-7eb014f1d818.png)
 
 Quick start:
-`docker run -d -p 3002:3000 -e GF_AUTH_ANONYMOUS_ENABLED=true -e GF_AUTH_ANONYMOUS_ORG_ROLE=Admin tkurki/signalk-grafana`
+`docker run -d -p 3002:3000 -e GF_AUTH_ANONYMOUS_ENABLED=true -e GF_AUTH_ANONYMOUS_ORG_ROLE=Admin tkurki/signalk-grafana:master`
 
 >Note that this will run Grafana with anonymous admin access
 

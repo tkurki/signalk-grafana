@@ -17,4 +17,5 @@ export const defaultQuery: Partial<SignalKQuery> = {
  */
 export interface SignalKDataSourceOptions extends DataSourceJsonData {
   hostname?: string;
+  ssl?: boolean;
 }

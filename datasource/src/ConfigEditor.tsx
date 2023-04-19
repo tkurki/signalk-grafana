@@ -1,5 +1,5 @@
 import { LegacyForms } from '@grafana/ui';
-const { FormField } = LegacyForms;
+const { FormField, Switch } = LegacyForms;
 
 import React, { PureComponent, ChangeEvent } from 'react';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
@@ -19,6 +19,16 @@ export class ConfigEditor extends PureComponent<Props, State> {
     onOptionsChange({ ...options, jsonData });
   };
 
+  onSSLChange = (event: any) => {
+    const { onOptionsChange, options } = this.props;
+    const jsonData = {
+      ...options.jsonData,
+      ssl: !!event.target.checked,
+    };
+    onOptionsChange({ ...options, jsonData });
+  }
+
+
   render() {
     const { options } = this.props;
     const { jsonData } = options;
@@ -26,6 +36,11 @@ export class ConfigEditor extends PureComponent<Props, State> {
     return (
       <div className="gf-form-group">
         <div className="gf-form">
+          <Switch
+            label='SSL'
+            onChange={this.onSSLChange}
+            checked={!!jsonData.ssl}
+          />
           <FormField
             label="Server address"
             labelWidth={10}

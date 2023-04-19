@@ -37,6 +37,7 @@ export interface QueryListener {
 
 export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOptions> {
   hostname: string;
+  ssl: boolean;
   listeners: QueryListener[] = [];
   pathValueHandlers: PathValueHandler[] = [];
   idleInterval?: number;
@@ -46,6 +47,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
   constructor(instanceSettings: DataSourceInstanceSettings<SignalKDataSourceOptions>) {
     super(instanceSettings);
     this.hostname = instanceSettings.jsonData.hostname || '';
+    this.ssl = instanceSettings.jsonData.ssl || false;
   }
 
   addListener(listener: QueryListener) {
@@ -67,7 +69,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
     if (this.ws) {
       return;
     }
-    this.ws = new ReconnectingWebsocket(`ws://${this.hostname}/signalk/v1/stream`);
+    this.ws = new ReconnectingWebsocket(`ws${this.ssl ? 's' : ''}://${this.hostname}/signalk/v1/stream`);
     this.ws.onmessage = (event) => {
       const msg = JSON.parse(event.data);
       this.pathValueHandlers.forEach((h) => {
@@ -192,14 +194,14 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
       to: options.range.to.toISOString(),
       resolution: (options.intervalMs / 1000).toString(),
     };
-    const url: URL = new URL(`http://${this.hostname}/signalk/v1/history/values`);
+    const url: URL = new URL(`http${this.ssl ? 's' : ''}://${this.hostname}/signalk/v1/history/values`);
     Object.keys(queryParams).forEach((key) => url.searchParams.append(key, queryParams[key]));
     return url.toString();
   }
 
   async testDatasource() {
     const wsPromise = new Promise((resolve, reject) => {
-      const ws = new WebSocket(`ws://${this.hostname}/signalk/v1/stream?subscribe=none`);
+      const ws = new WebSocket(`ws${this.ssl ? 's' : ''}://${this.hostname}/signalk/v1/stream?subscribe=none`);
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
@@ -230,7 +232,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
       };
     });
 
-    const apiPromise = fetch(`http://${this.hostname}/signalk/v1/history/values`, {
+    const apiPromise = fetch(`http${this.ssl ? 's' : ''}://${this.hostname}/signalk/v1/history/values`, {
       credentials: 'include',
     }).then((response) => {
       if (response.status === 400) {

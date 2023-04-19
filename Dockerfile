@@ -1,4 +1,4 @@
-FROM grafana/grafana:8.0.3
+FROM grafana/grafana:9.4.7
 
 ENV GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=signalk-datasource,signalk-trackmap
 

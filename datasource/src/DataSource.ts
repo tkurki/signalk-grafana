@@ -35,11 +35,13 @@ export interface QueryListener {
   onQuery: (options: DataQueryRequest<SignalKQuery>) => void;
 }
 
+const NO_OP_HANDLER = (pathValue: PathValue, update: any) => undefined;
+
 export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOptions> {
   hostname: string;
   ssl: boolean;
   listeners: QueryListener[] = [];
-  pathValueHandlers: PathValueHandler[] = [];
+  pathValueHandlers: { [key: string]: PathValueHandler } = {};
   idleInterval?: number;
 
   ws?: ReconnectingWebsocket;
@@ -61,10 +63,6 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
     }
   }
 
-  // addPathValueHandler(handler: PathValueHandler) {
-  //   this.pathValueHandlers.push(handler);
-  // }
-
   ensureWsIsOpen() {
     if (this.ws) {
       return;
@@ -72,27 +70,21 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
     this.ws = new ReconnectingWebsocket(`ws${this.ssl ? 's' : ''}://${this.hostname}/signalk/v1/stream`);
     this.ws.onmessage = (event) => {
       const msg = JSON.parse(event.data);
-      this.pathValueHandlers.forEach((h) => {
-        try {
-          if (msg.updates) {
-            msg.updates.forEach((update: any) => {
-              if (update.values) {
-                update.values.forEach((pathValue: any) => {
-                  this.pathValueHandlers.forEach((handler) => handler(pathValue, update));
-                });
-              }
+      if (msg.updates) {
+        msg.updates.forEach((update: any) => {
+          if (update.values) {
+            update.values.forEach((pathValue: any) => {
+              Object.values(this.pathValueHandlers).forEach((handler) => handler(pathValue, update));
             });
           }
-        } catch (e: any) {
-          console.error(e.message);
-        }
-      });
+        });
+      }
     };
   }
 
   query(options: DataQueryRequest<SignalKQuery>): Observable<DataQueryResponse> {
+    console.log(options.targets);
     this.listeners.forEach((l) => l.onQuery(options));
-    // this.pathValueHandlers = [];
 
     if (this.idleInterval) {
       clearInterval(this.idleInterval);
@@ -124,11 +116,13 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
           });
         };
 
-        if (rangeIsUptoNow(options.rangeRaw)) {
-          this.pathValueHandlers.push(
-            pathValueHandler(target.path, data, onDataInserted, target.dollarsource, target.multiplier)
-          );
-        }
+        const pathValueHandlerId = `${options.panelId}-${options.dashboardId}-${target.refId}`;
+
+        this.pathValueHandlers[pathValueHandlerId] = rangeIsUptoNow(options.rangeRaw)
+          ? pathValueHandler(target.path, data, onDataInserted, target.dollarsource, target.multiplier)
+          : NO_OP_HANDLER;
+          console.log(this.pathValueHandlers)
+
         return {
           dataframe: data,
           key: target.refId,

@@ -21,25 +21,27 @@
 - [x] move trackmap to the same repo
 - [x] check that there is no hardcoded host or port
 - [x] panel resize support
-- [ ] influx: even minutes need  seconds in from-to in influx query
-- [ ] configurable track & "now" marker color
+- [ ] add SSL toggle to datasource config
+- [ ] fix zooming with mouse drag
+- [ ] add proper unit conversion
+- [ ] fix popups population - why do you need to query first to get them populated?
+
+- [ ] write OpenApi spec for history api
 - [ ] visualise data with colored dot & secondary ring (D3 color mapping)
+- [ ] configurable sk server in trackmap to fetch charts from
+- [ ] configurable chart layers
+- [ ] configurable track & "now" marker color
 - [ ] show tooltip on graph from position on map
-- [ ] editable map layers
-- [ ] map layers from sk server
 - [ ] use full `vessels.xx` as context
-- [ ] fix querying if targets have different contexts
 - [ ] CH: implement different aggregates as multiple UNION ALL queries
 - [ ] allow only-streaming and only-history datasources
 - [ ] implement min / max / avg / median aggregates for streaming data
 - [ ] use subscriptions
-- [ ] add context configuration to query editor (history api, self handling)
-- [ ] add proper unit conversion
 - [ ] add server port to datasource config
-- [ ] investigate proxying via Grafana server
-- [ ] add SSL toggle to datasource config
+- [ ] investigate proxying via Grafana server (with Token auth?)
 - [ ] authentication support
 - [ ] add 'self' handling for history
+- [ ] add context configuration to query editor (history api, self handling)
 - [ ] add name to context handling, show MMSI:Name in the popup
 - [ ] add option to turn off streaming (you can always query now-1s, maybe not necessary?)
 - [ ] pause streaming when dragging on graph? https://github.com/grafana/grafana/issues/21264
@@ -49,4 +51,6 @@
 - [ ] dashboard level context selection
 - [ ] disable streaming updates in map? probably will cause havoc
 - [ ] outlier discard configuration (maybe on/off at least), buffer length to control how many outliers are tolerated
-- [ ] influx: fetch availables paths
+
+
+- [x] influx2: fetch availables paths

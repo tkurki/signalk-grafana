@@ -21,8 +21,8 @@
 - [x] move trackmap to the same repo
 - [x] check that there is no hardcoded host or port
 - [x] panel resize support
-- [ ] add SSL toggle to datasource config
-- [ ] fix zooming with mouse drag
+- [x] add SSL toggle to datasource config
+- [x] fix zooming with mouse drag
 - [ ] add proper unit conversion
 - [ ] fix popups population - why do you need to query first to get them populated?
 

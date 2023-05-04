@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { PanelProps, AbsoluteTimeRange, LegacyGraphHoverEvent } from '@grafana/data';
+import { PanelProps, AbsoluteTimeRange, DataHoverEvent } from '@grafana/data';
 import { TrackMapOptions } from 'types';
 import memoize from 'memoize-one';
 import { interpolateRdYlBu } from 'd3-scale-chromatic';
@@ -30,8 +30,12 @@ import 'leaflet/dist/leaflet.css';
 import { LineString } from 'geojson';
 import { LatLngBounds, LatLng } from 'leaflet';
 import ValidatingBuffer from 'ValidatingBuffer';
+import { PanelContext, PanelContextRoot } from '@grafana/ui';
 
 export class TrackMapPanel extends PureComponent<Props, State> {
+  static contextType = PanelContextRoot;
+  panelContext: PanelContext = {} as PanelContext;
+
   cursorSubscription: any; //RxJs Subscription
   constructor(props: Props) {
     super(props);
@@ -44,8 +48,12 @@ export class TrackMapPanel extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    this.cursorSubscription = this.props.eventBus.getStream(LegacyGraphHoverEvent).subscribe({
+    const panelContext = this.context as PanelContext;
+    const { eventBus } = panelContext;
+
+    this.cursorSubscription = eventBus.getStream(DataHoverEvent).subscribe({
       next: (evt) => {
+        console.log(evt)
         const currentPoint = this.pointByTime(evt.payload.point.time);
         if (currentPoint) {
           this.setState({ currentPoint: currentPoint.position });
@@ -55,7 +63,7 @@ export class TrackMapPanel extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
-    this.cursorSubscription.unsubscribe();
+    this.cursorSubscription?.unsubscribe();
   }
 
   render() {

@@ -53,7 +53,6 @@ export class TrackMapPanel extends PureComponent<Props, State> {
 
     this.cursorSubscription = eventBus.getStream(DataHoverEvent).subscribe({
       next: (evt) => {
-        console.log(evt)
         const currentPoint = this.pointByTime(evt.payload.point.time);
         if (currentPoint) {
           this.setState({ currentPoint: currentPoint.position });

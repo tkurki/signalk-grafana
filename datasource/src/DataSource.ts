@@ -5,12 +5,14 @@ import {
   DataSourceInstanceSettings,
   LoadingState,
   RawTimeRange,
+  TimeRange,
 } from '@grafana/data';
 
 import { SignalKQuery, SignalKDataSourceOptions } from './types';
 import { Observable, Subscriber } from 'rxjs';
 import ReconnectingWebsocket from './reconnecting-websocket';
 import { DualDataFrame } from 'DualDataframe';
+import { PathWithMeta } from 'QueryEditor';
 
 interface PathValue {
   path: string;
@@ -120,7 +122,6 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
         this.pathValueHandlers[pathValueHandlerId] = rangeIsUptoNow(options.rangeRaw)
           ? pathValueHandler(target.path, data, onDataInserted, target.dollarsource, target.multiplier)
           : NO_OP_HANDLER;
-          console.log(this.pathValueHandlers)
 
         return {
           dataframe: data,
@@ -247,7 +248,77 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
       return Promise.reject({ status: 'failure', message: `Neither streaming nor http history api works` });
     });
   }
+
+  fetchPaths(range: TimeRange, context: string): Promise<PathWithMeta[]> {
+    return fetch(this.getPathsUrl(range, context), {
+      credentials: 'include',
+    })
+      .then((res) => res.json())
+      .then((paths: string[]) => {
+        const validPathPromises: Array<Promise<PathWithMeta | void>> = paths.map((path) => {
+          const metaPath = `http${this.ssl ? 's' : ''}://${this.hostname}/signalk/v1/api/vessels/self/${path.split('.').join('/')}/meta`;
+          return fetch(metaPath, {
+            credentials: 'include',
+          })
+            .then((res) =>
+              res.status === 200
+                ? res
+                    .json()
+                    .then((meta) => ({ path, meta }))
+                    .catch((err) => {
+                      console.log(err);
+                      return Promise.resolve(undefined);
+                    })
+                : Promise.resolve({ path, meta: {} })
+            )
+            .catch((err) => {
+              console.log(err);
+              return Promise.resolve(undefined);
+            });
+        });
+        return Promise.all(validPathPromises).then((pathOrUndefinedA: Array<PathWithMeta | void>): PathWithMeta[] =>
+          pathOrUndefinedA.flatMap((f) => (!!f ? [f] : []))
+        );
+      })
+      .catch((err) => {
+        console.log(err);
+        return [];
+      });
+  }
+
+  getPathsUrl(range?: TimeRange, context?: string) {
+    if (!range) {
+      throw new Error('Valid range required for fetching paths');
+    }
+    const queryParams: { [k: string]: string } = { from: range.from.toISOString(), to: range.to.toISOString() };
+    if (context) {
+      queryParams.context = context;
+    }
+    const url: URL = new URL(`http://${this.hostname}/signalk/v1/history/paths`);
+    Object.keys(queryParams).forEach((key) => url.searchParams.append(key, queryParams[key]));
+    return url.toString();
+  }
+
+  fetchContexts(range: TimeRange) {
+    return fetch(this.getContextsUrl(range || undefined), {
+      credentials: 'include',
+    })
+      .then((res) => res.json())
+      .then((contexts) => contexts.map(toLabelValue));
+  }
+
+  getContextsUrl(range?: TimeRange) {
+    if (!range) {
+      throw new Error('Valid range required for fetching contexts');
+    }
+    const queryParams: { [k: string]: string } = { from: range.from.toISOString(), to: range.to.toISOString() };
+    const url: URL = new URL(`http${this.ssl ? 's' : ''}://${this.hostname}/signalk/v1/history/contexts`);
+    Object.keys(queryParams).forEach((key) => url.searchParams.append(key, queryParams[key]));
+    return url.toString();
+  }
 }
+
+export const toLabelValue = (s: string) => ({ label: s, value: s });
 
 const getDollarsource = (update: any) => {
   return update.$source ? update.$source : getSourceId(update.source);

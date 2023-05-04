@@ -3,8 +3,12 @@ import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import defaults from 'lodash/defaults';
 
 import React, { PureComponent, ChangeEvent } from 'react';
-import { QueryEditorProps, SelectableValue, DataQueryRequest, TimeRange } from '@grafana/data';
-import { DataSource, QueryListener } from './DataSource';
+import {
+  QueryEditorProps,
+  SelectableValue,
+  getDefaultTimeRange,
+} from '@grafana/data';
+import { DataSource, QueryListener, toLabelValue } from './DataSource';
 import { SignalKDataSourceOptions, defaultQuery, SignalKQuery } from './types';
 
 type Props = QueryEditorProps<DataSource, SignalKQuery, SignalKDataSourceOptions>;
@@ -20,7 +24,7 @@ interface AggregateFunctionValue {
   value: string;
 }
 
-interface PathWithMeta {
+export interface PathWithMeta {
   path: string;
   meta: object;
 }
@@ -42,21 +46,23 @@ const aggregateFunctions: AggregateFunctionValueMap = aggregateFunctionData.redu
 
 export class QueryEditor extends PureComponent<Props, State> {
   queryListener: QueryListener = {
-    onQuery: (options: DataQueryRequest<SignalKQuery>) => {
-      console.log('fetching');
-      fetchContexts(this.props.datasource.hostname, options).then((contexts) => {
-        contexts.unshift({
-          value: 'vessels.self',
-          label: 'self',
-        });
-        this.setState({ contexts });
-      });
-      fetchPaths(this.props.datasource.hostname, options, this.state?.context).then((paths) =>
-        this.setState({ paths })
-      );
-    },
+    onQuery: () => this.fetchContextsAndPaths,
   };
+
+  fetchContextsAndPaths() {
+    this.props.datasource.fetchContexts(this.props.range || getDefaultTimeRange()).then((contexts) => {
+      contexts.unshift({
+        value: 'vessels.self',
+        label: 'self',
+      });
+      this.setState({ contexts });
+    });
+    this.props.datasource
+      .fetchPaths(this.props.range || getDefaultTimeRange(), this.state?.context)
+      .then((paths) => this.setState({ paths }));
+  }
   componentDidMount() {
+    this.fetchContextsAndPaths()
     this.props.datasource.addListener(this.queryListener);
   }
   componentWillUnmount() {
@@ -172,76 +178,3 @@ export class QueryEditor extends PureComponent<Props, State> {
     );
   }
 }
-
-const fetchPaths = (
-  hostname: string,
-  options: DataQueryRequest<SignalKQuery>,
-  context: string
-): Promise<PathWithMeta[]> => {
-  return fetch(getPathsUrl(hostname, options.range, context), {
-    credentials: 'include',
-  })
-    .then((res) => res.json())
-    .then((paths: string[]) => {
-      const validPathPromises: Array<Promise<PathWithMeta | void>> = paths.map((path) => {
-        const metaPath = `http://${hostname}/signalk/v1/api/vessels/self/${path.split('.').join('/')}/meta`;
-        return fetch(metaPath, {
-          credentials: 'include',
-        })
-          .then((res) =>
-            res.status === 200
-              ? res
-                  .json()
-                  .then((meta) => ({ path, meta }))
-                  .catch((err) => {
-                    console.log(err);
-                    return Promise.resolve(undefined);
-                  })
-              : Promise.resolve({ path, meta: {} })
-          )
-          .catch((err) => {
-            console.log(err);
-            return Promise.resolve(undefined);
-          });
-      });
-      return Promise.all(validPathPromises).then((pathOrUndefinedA: Array<PathWithMeta | void>): PathWithMeta[] =>
-        pathOrUndefinedA.flatMap((f) => (!!f ? [f] : []))
-      );
-    })
-    .catch((err) => {
-      console.log(err);
-      return [];
-    });
-};
-
-const getPathsUrl = (hostname: string, range?: TimeRange, context?: string) => {
-  if (!range) {
-    throw new Error('Valid range required for fetching paths');
-  }
-  const queryParams: { [k: string]: string } = { from: range.from.toISOString(), to: range.to.toISOString() };
-  if (context) {
-    queryParams.context = context;
-  }
-  const url: URL = new URL(`http://${hostname}/signalk/v1/history/paths`);
-  Object.keys(queryParams).forEach((key) => url.searchParams.append(key, queryParams[key]));
-  return url.toString();
-};
-
-const fetchContexts = (hostname: string, options: DataQueryRequest<SignalKQuery>) =>
-  fetch(getContextsUrl(hostname, options.range || undefined), {
-    credentials: 'include',
-  })
-    .then((res) => res.json())
-    .then((contexts) => contexts.map(toLabelValue));
-
-const getContextsUrl = (hostname: string, range?: TimeRange) => {
-  if (!range) {
-    throw new Error('Valid range required for fetching contexts');
-  }
-  const queryParams: { [k: string]: string } = { from: range.from.toISOString(), to: range.to.toISOString() };
-  const url: URL = new URL(`http://${hostname}/signalk/v1/history/contexts`);
-  Object.keys(queryParams).forEach((key) => url.searchParams.append(key, queryParams[key]));
-  return url.toString();
-};
-
-const toLabelValue = (s: string) => ({ label: s, value: s });

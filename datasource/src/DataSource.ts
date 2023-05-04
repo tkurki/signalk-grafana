@@ -83,7 +83,6 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
   }
 
   query(options: DataQueryRequest<SignalKQuery>): Observable<DataQueryResponse> {
-    console.log(options.targets);
     this.listeners.forEach((l) => l.onQuery(options));
 
     if (this.idleInterval) {

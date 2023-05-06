@@ -107,7 +107,7 @@ export class QueryEditor extends PureComponent<Props, State> {
 
   onConversionChange = (item: SelectableValue<UnitConversion>) => {
     const { onChange, query, onRunQuery } = this.props;
-    onChange({ ...query, unitConversion: item.value });
+    onChange({ ...query, unitConversion: item?.value });
     onRunQuery();
   };
 
@@ -187,7 +187,7 @@ export class QueryEditor extends PureComponent<Props, State> {
               }
               options={conversions}
               allowCustomValue={false}
-              backspaceRemovesValue={false}
+              backspaceRemovesValue={true}
               isClearable={true}
               onChange={this.onConversionChange}
               width={24}

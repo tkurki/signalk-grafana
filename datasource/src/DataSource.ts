@@ -13,6 +13,7 @@ import { Observable, Subscriber } from 'rxjs';
 import ReconnectingWebsocket from './reconnecting-websocket';
 import { DualDataFrame } from 'DualDataframe';
 import { PathWithMeta } from 'QueryEditor';
+import { getConverter } from 'conversions';
 
 interface PathValue {
   path: string;
@@ -120,7 +121,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
         const pathValueHandlerId = `${options.panelId}-${options.dashboardId}-${target.refId}`;
 
         this.pathValueHandlers[pathValueHandlerId] = rangeIsUptoNow(options.rangeRaw)
-          ? pathValueHandler(target.path, data, onDataInserted, target.dollarsource, target.multiplier)
+          ? pathValueHandler(target, data, onDataInserted)
           : NO_OP_HANDLER;
 
         return {
@@ -154,13 +155,14 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
     })
       .then((response) => (response.ok ? response.json() : null))
       .then((result: HistoryResult) => {
+        const seriesConversions = options.targets.map(getConversion)
         if (result) {
           result.data.forEach((row) => {
             const ts = new Date(row[0]);
             series.forEach((serie, i) => {
               let value = row[i + 1];
               if (typeof value === 'number') {
-                value = value * (options.targets[i].multiplier === undefined ? 1 : options.targets[i].multiplier);
+                value = seriesConversions[i](value);
               }
               serie.dataframe.addHistoryData(ts, value);
             });
@@ -266,13 +268,13 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
                     .json()
                     .then((meta) => ({ path, meta }))
                     .catch((err) => {
-                      console.log(err);
+                      console.error(err);
                       return Promise.resolve(undefined);
                     })
                 : Promise.resolve({ path, meta: {} })
             )
             .catch((err) => {
-              console.log(err);
+              console.error(err);
               return Promise.resolve(undefined);
             });
         });
@@ -281,7 +283,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
         );
       })
       .catch((err) => {
-        console.log(err);
+        console.error(err);
         return [];
       });
   }
@@ -340,12 +342,12 @@ const getSourceId = (source: any): string => {
 const rangeIsUptoNow = (rangeRaw?: RawTimeRange) => rangeRaw && rangeRaw.to === 'now';
 
 const pathValueHandler = (
-  path: string,
+  query: SignalKQuery,
   data: DualDataFrame,
-  onDataInserted: () => void,
-  dollarsource?: string,
-  multiplier?: number
+  onDataInserted: () => void
 ) => {
+  const { dollarsource, path} = query
+  const conversion = getConversion(query)
   let sourceMatcher: (update: any) => boolean = () => true;
   if (dollarsource && dollarsource !== '') {
     sourceMatcher = (update: any) => getDollarsource(update) === dollarsource;
@@ -354,9 +356,17 @@ const pathValueHandler = (
   return (pathValue: PathValue, update: any) => {
     if (pathValue.path === path) {
       if (sourceMatcher(update)) {
-        data.addStreamingData(pathValue.value * (multiplier || 1));
+        data.addStreamingData(conversion(pathValue.value));
         onDataInserted();
       }
     }
   };
 };
+
+const getConversion = (target: SignalKQuery) => {
+  if(target.unitConversion) {
+      return getConverter(target.unitConversion)
+    }
+    const multiplier = target.multiplier || 1
+    return (x: number) => multiplier * x
+  }

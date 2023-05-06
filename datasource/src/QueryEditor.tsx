@@ -5,7 +5,7 @@ import defaults from 'lodash/defaults';
 import React, { PureComponent, ChangeEvent } from 'react';
 import { QueryEditorProps, SelectableValue, getDefaultTimeRange } from '@grafana/data';
 import { DataSource, QueryListener, toLabelValue } from './DataSource';
-import { SignalKDataSourceOptions, defaultQuery, SignalKQuery } from './types';
+import { SignalKDataSourceOptions, SignalKQuery } from './types';
 import { Unit, UnitConversion, getTargetUnits } from 'conversions';
 
 type Props = QueryEditorProps<DataSource, SignalKQuery, SignalKDataSourceOptions>;
@@ -112,7 +112,7 @@ export class QueryEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    const query = defaults(this.props.query, defaultQuery);
+    const query = defaults(this.props.query);
     const { path, multiplier, dollarsource, context, aggregate, unitConversion } = query;
     const pathLabels = this.state && this.state.paths ? this.state.paths.map(({ path }) => path).map(toLabelValue) : [];
     const pathWithMeta = (this.state?.paths || []).find((pWm) => pWm.path === path);

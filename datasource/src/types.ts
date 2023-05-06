@@ -10,10 +10,6 @@ export interface SignalKQuery extends DataQuery {
   dollarsource?: string;
 }
 
-export const defaultQuery: Partial<SignalKQuery> = {
-  path: 'navigation.speedOverGround',
-};
-
 /**
  * These are options configured for each DataSource instance
  */

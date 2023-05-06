@@ -120,24 +120,6 @@ export class QueryEditor extends PureComponent<Props, State> {
     return (
       <div>
         <InlineFieldRow>
-          <InlineField labelWidth={14} label="Context">
-            <Select
-              value={{
-                label: context == 'vessels.self' ? 'self' : context || 'self',
-                value: context || 'vessels.self',
-              }}
-              options={this.state ? this.state.contexts : []}
-              allowCustomValue={true}
-              backspaceRemovesValue={true}
-              isClearable={true}
-              onChange={this.onContextChange}
-              noOptionsMessage={'Context list not available'}
-              width={40}
-            />
-          </InlineField>
-        </InlineFieldRow>
-
-        <InlineFieldRow>
           <InlineField labelWidth={14} label="Path">
             <Select
               value={{ label: path, value: path }}
@@ -206,6 +188,23 @@ export class QueryEditor extends PureComponent<Props, State> {
               width={10}
               type="number"
               onChange={this.onMultiplierChange}
+            />
+          </InlineField>
+        </InlineFieldRow>
+        <InlineFieldRow>
+          <InlineField labelWidth={14} label="Context">
+            <Select
+              value={{
+                label: context == 'vessels.self' ? 'self' : context || 'self',
+                value: context || 'vessels.self',
+              }}
+              options={this.state ? this.state.contexts : []}
+              allowCustomValue={true}
+              backspaceRemovesValue={true}
+              isClearable={true}
+              onChange={this.onContextChange}
+              noOptionsMessage={'Context list not available'}
+              width={40}
             />
           </InlineField>
         </InlineFieldRow>

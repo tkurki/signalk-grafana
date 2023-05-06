@@ -122,7 +122,10 @@ export class QueryEditor extends PureComponent<Props, State> {
         <InlineFieldRow>
           <InlineField labelWidth={14} label="Context">
             <Select
-              value={{ label: context || 'self', value: context || 'vessels.self' }}
+              value={{
+                label: context == 'vessels.self' ? 'self' : context || 'self',
+                value: context || 'vessels.self',
+              }}
               options={this.state ? this.state.contexts : []}
               allowCustomValue={true}
               backspaceRemovesValue={true}

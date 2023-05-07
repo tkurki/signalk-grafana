@@ -195,7 +195,7 @@ export class QueryEditor extends PureComponent<Props, State> {
           <InlineField labelWidth={14} label="Context">
             <Select
               value={{
-                label: context == 'vessels.self' ? 'self' : context || 'self',
+                label: context === 'vessels.self' ? 'self' : context || 'self',
                 value: context || 'vessels.self',
               }}
               options={this.state ? this.state.contexts : []}
@@ -213,7 +213,7 @@ export class QueryEditor extends PureComponent<Props, State> {
   }
 }
 
-const getUnitConversions = (from: Unit): SelectableValue<UnitConversion>[] => [
+const getUnitConversions = (from: Unit): Array<SelectableValue<UnitConversion>> => [
   ...getTargetUnits(from as Unit).map((u) => ({ label: u, value: { from: from, to: u } })),
   { label: '(No conversion)', value: undefined },
 ];

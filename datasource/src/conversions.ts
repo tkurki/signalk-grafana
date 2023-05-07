@@ -108,7 +108,6 @@ export interface UnitConversion {
 }
 
 export const getConverter = ({from, to}: UnitConversion) => {
-  console.log(from, to)
   if (CONVERSIONS[from][to]) {
     return CONVERSIONS[from][to]
   }

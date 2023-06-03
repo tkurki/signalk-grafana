@@ -32,5 +32,4 @@ The datasource runs in your browser, so you can use the same hostname that you u
 
 - authentication support
 - accessing the datasource via Grafana server
-- update to latest Grafana
 

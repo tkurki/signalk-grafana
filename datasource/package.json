@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Signal K datasource (streaming & historical data)",
   "scripts": {
-    "build": "grafana-toolkit plugin:build",
+    "build": "grafana-toolkit plugin:build --preserveConsole",
     "test": "grafana-toolkit plugin:test",
     "dev": "grafana-toolkit plugin:dev",
     "watch": "grafana-toolkit plugin:dev --watch"

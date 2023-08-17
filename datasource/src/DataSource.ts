@@ -22,11 +22,6 @@ interface PathValue {
 
 type PathValueHandler = (pv: PathValue, update: any) => void;
 
-interface DataSeries {
-  dataframe: DualDataFrame;
-  key: string;
-}
-
 interface HistoryResult {
   context: string;
   values: Array<{ path: string; method: string; source: string | null }>;
@@ -96,39 +91,22 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
     const result = new Observable<DataQueryResponse>((subscriber) => {
       let lastStreamingValueTimestamp = 0;
 
-      const series: DataSeries[] = options.targets.map((target) => {
-        //push empty data so that the values are registered always in order
-        //otherwise the path that produces data first will be the first
-        //series in grafana, making the order undeterministic
-        subscriber.next({
-          data: [],
-          key: target.refId,
-          state: LoadingState.Streaming,
-        });
-
-        const data = new DualDataFrame(`${target.path}:${target.aggregate}`, 1000);
-        data.refId = target.refId;
-
+      const dataframe = new DualDataFrame(options.targets.map(
+        target => `${target.path}:${target.aggregate}`), 1000);
         const onDataInserted = () => {
           lastStreamingValueTimestamp = Date.now();
           subscriber.next({
-            data: [data],
-            key: target.refId,
+            data: [dataframe],
+            key: options.targets[0].refId,
             state: LoadingState.Streaming,
           });
         };
 
-        const pathValueHandlerId = `${options.panelId}-${options.dashboardId}-${target.refId}`;
+        const pathValueHandlerId = `${options.panelId}-${options.dashboardId}-${options.targets[0].refId}`;
 
         this.pathValueHandlers[pathValueHandlerId] = rangeIsUptoNow(options.rangeRaw)
-          ? pathValueHandler(target, data, onDataInserted)
+          ? pathValueHandler(options.targets[0], dataframe, onDataInserted)
           : NO_OP_HANDLER;
-
-        return {
-          dataframe: data,
-          key: target.refId,
-        };
-      });
 
       if (rangeIsUptoNow(options.rangeRaw) && options.targets.length > 0) {
         this.ensureWsIsOpen();
@@ -137,42 +115,34 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
         this.idleInterval = setInterval(() => {
           if (Date.now() - lastStreamingValueTimestamp > 1000) {
             subscriber.next({
-              data: [series[0].dataframe],
-              key: series[0].dataframe.refId,
+              data: [dataframe],
+              key: options.targets[0].refId,
             });
           }
         }, 1000) as unknown as number;
       }
 
-      this.doQuery(options, series, subscriber);
+      this.doQuery(options, dataframe, subscriber);
     });
     return result;
   }
 
-  doQuery(options: DataQueryRequest<SignalKQuery>, series: DataSeries[], subscriber: Subscriber<DataQueryResponse>) {
+  doQuery(options: DataQueryRequest<SignalKQuery>, dataframe: DualDataFrame, subscriber: Subscriber<DataQueryResponse>) {
     fetch(this.getHistoryUrl(options), {
       credentials: 'include',
     })
       .then((response) => (response.ok ? response.json() : null))
       .then((result: HistoryResult) => {
-        const seriesConversions = options.targets.map(getConversion)
+        // const seriesConversions = options.targets.map(getConversion)
         if (result) {
-          result.data.forEach((row) => {
+          result.data.forEach((row: number[]) => {
             const ts = new Date(row[0]);
-            series.forEach((serie, i) => {
-              let value = row[i + 1];
-              if (typeof value === 'number') {
-                value = seriesConversions[i](value);
-              }
-              serie.dataframe.addHistoryData(ts, value);
-            });
+            dataframe.addHistoryData(ts, row.slice(1));
           });
-          series.forEach((serie) => {
-            subscriber.next({
-              data: [serie.dataframe],
-              key: serie.key,
-            });
-          });
+          subscriber.next({
+            data: [dataframe],
+            key: options.targets[0].refId
+          })
         }
       });
   }

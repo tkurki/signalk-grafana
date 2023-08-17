@@ -25,7 +25,7 @@ export class DualDataFrame implements DataFrame {
   mutableDataFrame: MutableDataFrame;
   myVectors: DualProxyVector[];
 
-  constructor(fieldName: string, maxStreamingPoints: number) {
+  constructor(fieldNames: string[], maxStreamingPoints: number) {
     this.length = 0;
 
     this.circularDataFrame = new CircularDataFrame({
@@ -35,12 +35,12 @@ export class DualDataFrame implements DataFrame {
     this.mutableDataFrame = new MutableDataFrame();
     [this.circularDataFrame, this.mutableDataFrame].forEach((df) => {
       df.addField({ name: 'time', type: FieldType.time });
-      df.addField({ name: fieldName, type: FieldType.number });
+      fieldNames.forEach(fieldName =>
+        df.addField({ name: fieldName, type: FieldType.number }));
     });
 
-    this.myVectors = [];
-    this.myVectors[0] = new DualProxyVector(this.mutableDataFrame, this.circularDataFrame, 0);
-    this.myVectors[1] = new DualProxyVector(this.mutableDataFrame, this.circularDataFrame, 1);
+    this.myVectors = [new DualProxyVector(this.mutableDataFrame, this.circularDataFrame, 0),
+    ...fieldNames.map((fieldName, i) => new DualProxyVector(this.mutableDataFrame, this.circularDataFrame, i+1))]
 
     this.fields = [
       {
@@ -49,18 +49,20 @@ export class DualDataFrame implements DataFrame {
         config: {},
         values: this.myVectors[0],
       },
-      {
+      ...fieldNames.map((fieldName, i) => ({
         name: fieldName,
         type: FieldType.number,
         config: {},
-        values: this.myVectors[1],
-      },
+        values: this.myVectors[i+1],
+      }
+      ))
     ];
   }
 
-  addHistoryData(ts: Date, value: number | null) {
-    this.mutableDataFrame.appendRow([ts, value]);
+  addHistoryData(ts: Date, values: Array<number | null>) {
+    // console.log([ts, ...values])
     this.length = this.mutableDataFrame.length + this.circularDataFrame.length;
+    this.mutableDataFrame.appendRow([ts, ...values]);
     this.myVectors.forEach((vector) => (vector.length = this.length));
   }
 

@@ -133,11 +133,11 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
     })
       .then((response) => (response.ok ? response.json() : null))
       .then((result: HistoryResult) => {
-        // const seriesConversions = options.targets.map(getConversion)
+        const seriesConversions = options.targets.map(getConversion)
         if (result) {
           result.data.forEach((row: number[]) => {
             const ts = new Date(row[0]);
-            dataframe.addHistoryData(ts, row.slice(1));
+            dataframe.addHistoryData(ts, row.slice(1).map((value, i) => seriesConversions[i](value)));
           });
           subscriber.next({
             data: [dataframe],

@@ -4,6 +4,18 @@
   "id": "signalk-datasource",
   "metrics": true,
   "streaming": true,
+  "routes": [
+    {
+      "path": "historyapi",
+      "url": "http://{{ .JsonData.hostname }}/",
+      "headers": [
+        {
+          "name": "Authorization",
+          "content": "Bearer {{ .SecureJsonData.token }}"
+        }
+      ]
+    }
+  ],
   "info": {
     "description": "Signal K datasource (streaming & historical data)",
     "author": {

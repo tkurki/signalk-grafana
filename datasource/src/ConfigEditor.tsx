@@ -3,9 +3,9 @@ const { FormField, Switch } = LegacyForms;
 
 import React, { PureComponent, ChangeEvent } from 'react';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { SignalKDataSourceOptions } from './types';
+import { SecureSignalKDataSourceOptions, SignalKDataSourceOptions } from './types';
 
-interface Props extends DataSourcePluginOptionsEditorProps<SignalKDataSourceOptions> {}
+interface Props extends DataSourcePluginOptionsEditorProps<SignalKDataSourceOptions, SecureSignalKDataSourceOptions> {}
 
 interface State {}
 
@@ -28,10 +28,20 @@ export class ConfigEditor extends PureComponent<Props, State> {
     onOptionsChange({ ...options, jsonData });
   }
 
+  onTokenChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { onOptionsChange, options } = this.props;
+    onOptionsChange({
+      ...options,
+      secureJsonData: {
+        token: event.target.value,
+      },
+    });
+  };
+
 
   render() {
     const { options } = this.props;
-    const { jsonData } = options;
+    const { jsonData, secureJsonData } = options;
 
     return (
       <div className="gf-form-group">
@@ -47,6 +57,14 @@ export class ConfigEditor extends PureComponent<Props, State> {
             inputWidth={20}
             onChange={this.onHostnameChange}
             value={jsonData.hostname || ''}
+            placeholder="Signal K server hostname/ip address"
+          />
+          <FormField
+            label="Authentication Token"
+            labelWidth={10}
+            inputWidth={20}
+            onChange={this.onTokenChange}
+            value={secureJsonData?.token ?? ''}
             placeholder="Signal K server hostname/ip address"
           />
         </div>

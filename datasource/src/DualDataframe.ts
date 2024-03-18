@@ -66,7 +66,7 @@ export class DualDataFrame implements DataFrame {
     this.myVectors.forEach((vector) => (vector.length = this.length));
   }
 
-  addStreamingData(value: number) {
+  addStreamingData(value: number | null) {
     this.circularDataFrame.fields[0].values.add(Date.now());
     this.circularDataFrame.fields[1].values.add(value);
     this.length = this.mutableDataFrame.length + this.circularDataFrame.length;

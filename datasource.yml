@@ -18,7 +18,7 @@ datasources:
   withCredentials: false
   isDefault: true
   jsonData:
-    hostname: localhost:3000
+    hostname: host.docker.internal:3003
   secureJsonData:
   version: 1
   readOnly: false

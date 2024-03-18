@@ -9,11 +9,12 @@ import {
 } from '@grafana/data';
 
 import { SignalKQuery, SignalKDataSourceOptions } from './types';
-import { Observable, Subscriber } from 'rxjs';
+import { Observable, Subscriber, lastValueFrom } from 'rxjs';
 import ReconnectingWebsocket from './reconnecting-websocket';
 import { DualDataFrame } from 'DualDataframe';
 import { PathWithMeta } from 'QueryEditor';
 import { getConverter } from 'conversions';
+import { getBackendSrv } from '@grafana/runtime';
 
 interface PathValue {
   path: string;
@@ -43,11 +44,13 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
   idleInterval?: number;
 
   ws?: ReconnectingWebsocket;
+  url?: string | undefined;
 
   constructor(instanceSettings: DataSourceInstanceSettings<SignalKDataSourceOptions>) {
     super(instanceSettings);
     this.hostname = instanceSettings.jsonData.hostname || '';
     this.ssl = instanceSettings.jsonData.ssl || false;
+    this.url = instanceSettings.url;
   }
 
   addListener(listener: QueryListener) {
@@ -65,7 +68,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
     if (this.ws) {
       return;
     }
-    this.ws = new ReconnectingWebsocket(`ws${this.ssl ? 's' : ''}://${this.hostname}/signalk/v1/stream`);
+    this.ws = new ReconnectingWebsocket(this.getWebsocketUrl());
     this.ws.onmessage = (event) => {
       const msg = JSON.parse(event.data);
       if (msg.updates) {
@@ -78,6 +81,10 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
         });
       }
     };
+  }
+
+  getWebsocketUrl() {
+    return `ws${window.location.protocol === 'https' ? 's' : ''}://${window.location.host}${this.url}/historyapi/signalk/v1/stream`
   }
 
   query(options: DataQueryRequest<SignalKQuery>): Observable<DataQueryResponse> {
@@ -93,20 +100,20 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
 
       const dataframe = new DualDataFrame(options.targets.map(
         target => `${target.path}:${target.aggregate}`), 1000);
-        const onDataInserted = () => {
-          lastStreamingValueTimestamp = Date.now();
-          subscriber.next({
-            data: [dataframe],
-            key: options.targets[0].refId,
-            state: LoadingState.Streaming,
-          });
-        };
+      const onDataInserted = () => {
+        lastStreamingValueTimestamp = Date.now();
+        subscriber.next({
+          data: [dataframe],
+          key: options.targets[0].refId,
+          state: LoadingState.Streaming,
+        });
+      };
 
-        const pathValueHandlerId = `${options.panelId}-${options.dashboardId}-${options.targets[0].refId}`;
+      const pathValueHandlerId = `${options.panelId}-${options.dashboardId}-${options.targets[0].refId}`;
 
-        this.pathValueHandlers[pathValueHandlerId] = rangeIsUptoNow(options.rangeRaw)
-          ? pathValueHandler(options.targets[0], dataframe, onDataInserted)
-          : NO_OP_HANDLER;
+      this.pathValueHandlers[pathValueHandlerId] = rangeIsUptoNow(options.rangeRaw)
+        ? pathValueHandler(options.targets[0], dataframe, onDataInserted)
+        : NO_OP_HANDLER;
 
       if (rangeIsUptoNow(options.rangeRaw) && options.targets.length > 0) {
         this.ensureWsIsOpen();
@@ -127,11 +134,14 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
     return result;
   }
 
-  doQuery(options: DataQueryRequest<SignalKQuery>, dataframe: DualDataFrame, subscriber: Subscriber<DataQueryResponse>) {
-    fetch(this.getHistoryUrl(options), {
-      credentials: 'include',
+  async doQuery(options: DataQueryRequest<SignalKQuery>, dataframe: DualDataFrame, subscriber: Subscriber<DataQueryResponse>) {
+    //https://community.grafana.com/t/how-to-migrate-from-backendsrv-datasourcerequest-to-backendsrv-fetch/58770
+    const observableResponse = getBackendSrv().fetch({
+      url: this.getHistoryUrl(options)
     })
-      .then((response) => (response.ok ? response.json() : null))
+    lastValueFrom(observableResponse).then(response => {
+      return response.data as unknown as HistoryResult
+    })
       .then((result: HistoryResult) => {
         const seriesConversions = options.targets.map(getConversion)
         if (result) {
@@ -160,8 +170,8 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
       to: options.range.to.toISOString(),
       resolution: (options.intervalMs / 1000).toString(),
     };
-    const url: URL = new URL(`http${this.ssl ? 's' : ''}://${this.hostname}/signalk/v1/history/values`);
-    Object.keys(queryParams).forEach((key) => url.searchParams.append(key, queryParams[key]));
+    let url = `${this.url}/historyapi/signalk/v1/history/values?`;
+    Object.keys(queryParams).forEach((key) => (url += `${key}=${queryParams[key]}&`));
     return url.toString();
   }
 
@@ -235,12 +245,12 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
             .then((res) =>
               res.status === 200
                 ? res
-                    .json()
-                    .then((meta) => ({ path, meta }))
-                    .catch((err) => {
-                      console.error(err);
-                      return Promise.resolve(undefined);
-                    })
+                  .json()
+                  .then((meta) => ({ path, meta }))
+                  .catch((err) => {
+                    console.error(err);
+                    return Promise.resolve(undefined);
+                  })
                 : Promise.resolve({ path, meta: {} })
             )
             .catch((err) => {
@@ -316,7 +326,7 @@ const pathValueHandler = (
   data: DualDataFrame,
   onDataInserted: () => void
 ) => {
-  const { dollarsource, path} = query
+  const { dollarsource, path } = query
   const conversion = getConversion(query)
   let sourceMatcher: (update: any) => boolean = () => true;
   if (dollarsource && dollarsource !== '') {
@@ -333,10 +343,13 @@ const pathValueHandler = (
   };
 };
 
-const getConversion = (target: SignalKQuery) => {
-  if(target.unitConversion) {
-      return getConverter(target.unitConversion)
-    }
-    const multiplier = target.multiplier || 1
-    return (x: number) => multiplier * x
+type Conversion = (v: number | null) => (number | null)
+
+const getConversion = (target: SignalKQuery): Conversion => {
+  console.log(target)
+  if (target.unitConversion) {
+    return getConverter(target.unitConversion)
   }
+  const multiplier = target.multiplier || 1
+  return (x) => x === null ? null : multiplier * x
+}

@@ -17,3 +17,7 @@ export interface SignalKDataSourceOptions extends DataSourceJsonData {
   hostname?: string;
   ssl?: boolean;
 }
+
+export interface SecureSignalKDataSourceOptions {
+  token?: string
+}

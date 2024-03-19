@@ -242,18 +242,19 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
       .then((paths: string[]) => {
         return paths.map((path) => {
           let fetched = false
-          let meta: any = {}
+          let _meta: any
           return {
             path,
             meta: () => {
               if (!fetched) {
                 const observableResponse = getBackendSrv().fetch({ url: `${this.url}/historyapi/signalk/v1/api/vessels/self/${path.split('.').join('/')}/meta` })
-                lastValueFrom(observableResponse)
+                _meta = lastValueFrom(observableResponse)
                   .then(response => {
                     fetched = true
-                    meta = response.data
+                    return response.data
                   })
-              } return meta
+              }
+              return _meta
             }
           }
         })

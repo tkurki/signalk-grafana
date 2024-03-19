@@ -14,6 +14,10 @@ interface State {
   paths: PathWithMeta[];
   contexts: Array<SelectableValue<string>>;
   context: string;
+  conversions: Array<SelectableValue<UnitConversion>>;
+  meta: {
+    units?: string;
+  };
 }
 
 interface AggregateFunctionValue {
@@ -23,9 +27,9 @@ interface AggregateFunctionValue {
 
 export interface PathWithMeta {
   path: string;
-  meta: () => {
+  meta: () => Promise<{
     units?: string;
-  };
+  }>;
 }
 
 type AggregateFunctionValueMap = { [key: string]: AggregateFunctionValue };
@@ -58,14 +62,33 @@ export class QueryEditor extends PureComponent<Props, State> {
     });
     this.props.datasource
       .fetchPaths(this.props.range || getDefaultTimeRange(), this.state?.context)
-      .then((paths) => this.setState({ paths }));
+      .then((paths) => this.setState({ paths }))
+      .then(() => this.updateConversions());
   }
+
   componentDidMount() {
     this.fetchContextsAndPaths();
     this.props.datasource.addListener(this.queryListener);
   }
   componentWillUnmount() {
     this.props.datasource.removeListener(this.queryListener);
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    if (prevProps.query.path !== this.props.query.path) {
+      this.updateConversions()
+    }
+  }
+
+  updateConversions() {
+    const pWm = (this.state?.paths || []).find((pWm) => pWm.path === this.props.query.path)
+    if (pWm) {
+      pWm.meta().then(meta => {
+        this.setState({ meta, conversions: getUnitConversions((meta?.units || '') as unknown as Unit) })
+      })
+    } else {
+      this.setState({conversions: []})
+    }
   }
 
   onContextChange = (item: SelectableValue<string>) => {
@@ -79,7 +102,7 @@ export class QueryEditor extends PureComponent<Props, State> {
   onPathChange = (item: SelectableValue<string>) => {
     const { onChange, query, onRunQuery } = this.props;
     const path = item && item.value ? item.value : '';
-    onChange({ ...query, path });
+    onChange({ ...query, path, unitConversion: undefined, multiplier: 1 });
     onRunQuery();
   };
 
@@ -115,8 +138,6 @@ export class QueryEditor extends PureComponent<Props, State> {
     const query = defaults(this.props.query);
     const { path, multiplier, dollarsource, context, aggregate, unitConversion } = query;
     const pathLabels = this.state && this.state.paths ? this.state.paths.map(({ path }) => path).map(toLabelValue) : [];
-    const pathWithMeta = (this.state?.paths || []).find((pWm) => pWm.path === path);
-    const conversions = getUnitConversions((pathWithMeta?.meta().units || '') as Unit);
     return (
       <div>
         <InlineFieldRow>
@@ -158,8 +179,8 @@ export class QueryEditor extends PureComponent<Props, State> {
           </InlineField>
           <InlineField
             labelWidth={18}
-            label={`Convert from ${pathWithMeta?.meta().units || '-'} to `}
-            disabled={!pathWithMeta?.meta().units}
+            label={`Convert from ${this.state?.meta?.units || '-'} to `}
+            disabled={!this.state?.meta?.units}
           >
             <Select<UnitConversion>
               value={
@@ -167,7 +188,7 @@ export class QueryEditor extends PureComponent<Props, State> {
                   ? { label: unitConversion.to, value: unitConversion }
                   : { label: '(No conversion)', value: undefined }
               }
-              options={conversions}
+              options={this.state?.conversions}
               allowCustomValue={false}
               backspaceRemovesValue={true}
               isClearable={true}

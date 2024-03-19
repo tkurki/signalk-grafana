@@ -23,7 +23,7 @@ interface AggregateFunctionValue {
 
 export interface PathWithMeta {
   path: string;
-  meta: {
+  meta: () => {
     units?: string;
   };
 }
@@ -116,7 +116,7 @@ export class QueryEditor extends PureComponent<Props, State> {
     const { path, multiplier, dollarsource, context, aggregate, unitConversion } = query;
     const pathLabels = this.state && this.state.paths ? this.state.paths.map(({ path }) => path).map(toLabelValue) : [];
     const pathWithMeta = (this.state?.paths || []).find((pWm) => pWm.path === path);
-    const conversions = getUnitConversions((pathWithMeta?.meta.units || '') as Unit);
+    const conversions = getUnitConversions((pathWithMeta?.meta().units || '') as Unit);
     return (
       <div>
         <InlineFieldRow>
@@ -158,8 +158,8 @@ export class QueryEditor extends PureComponent<Props, State> {
           </InlineField>
           <InlineField
             labelWidth={18}
-            label={`Convert from ${pathWithMeta?.meta.units || '-'} to `}
-            disabled={!pathWithMeta?.meta.units}
+            label={`Convert from ${pathWithMeta?.meta().units || '-'} to `}
+            disabled={!pathWithMeta?.meta().units}
           >
             <Select<UnitConversion>
               value={

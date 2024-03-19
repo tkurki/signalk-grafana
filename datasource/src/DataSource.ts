@@ -157,6 +157,10 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
       });
   }
 
+  getHistoryUrlBase() {
+    return `${this.url}/historyapi/signalk/v1/history/values?`;
+  }
+
   getHistoryUrl(options: DataQueryRequest<SignalKQuery>) {
     const paths = options.targets.map((target) => `${target.path}:${target.aggregate || 'average'}`).join(',');
     if (!options.range || !options.range.from || !options.range.to || !options.intervalMs) {
@@ -170,14 +174,12 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
       to: options.range.to.toISOString(),
       resolution: (options.intervalMs / 1000).toString(),
     };
-    let url = `${this.url}/historyapi/signalk/v1/history/values?`;
-    Object.keys(queryParams).forEach((key) => (url += `${key}=${queryParams[key]}&`));
-    return url.toString();
+    return urlWithQueryParams(this.getHistoryUrlBase(), queryParams)
   }
 
   async testDatasource() {
     const wsPromise = new Promise((resolve, reject) => {
-      const ws = new WebSocket(`ws${this.ssl ? 's' : ''}://${this.hostname}/signalk/v1/stream?subscribe=none`);
+      const ws = new WebSocket(`${this.getWebsocketUrl()}?subscribe=none`);
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
@@ -208,17 +210,17 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
       };
     });
 
-    const apiPromise = fetch(`http${this.ssl ? 's' : ''}://${this.hostname}/signalk/v1/history/values`, {
-      credentials: 'include',
-    }).then((response) => {
-      if (response.status === 400) {
-        return {
-          status: 'success',
-          message: 'Success',
-        };
-      }
-      throw new Error(`History endpoint returned ${response.status}`);
-    });
+    const observableResponse = getBackendSrv().fetch({ url: this.getHistoryUrlBase() })
+    const apiPromise = lastValueFrom(observableResponse)
+      .then((response) => {
+        if (response.status === 400) {
+          return {
+            status: 'success',
+            message: 'Success',
+          };
+        }
+        throw new Error(`History endpoint returned ${response.status}`);
+      });
 
     return Promise.all([wsPromise, apiPromise].map((p: Promise<any>) => p.catch((e: Error) => e))).then((statuses) => {
       if (statuses.some((status) => status.status === 'success')) {
@@ -232,35 +234,29 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
   }
 
   fetchPaths(range: TimeRange, context: string): Promise<PathWithMeta[]> {
-    return fetch(this.getPathsUrl(range, context), {
-      credentials: 'include',
-    })
-      .then((res) => res.json())
+    const observableResponse = getBackendSrv().fetch({ url: this.getPathsUrl(range, context) })
+    return lastValueFrom(observableResponse)
+      .then(response => {
+        return response.data as unknown as string[]
+      })
       .then((paths: string[]) => {
-        const validPathPromises: Array<Promise<PathWithMeta | void>> = paths.map((path) => {
-          const metaPath = `http${this.ssl ? 's' : ''}://${this.hostname}/signalk/v1/api/vessels/self/${path.split('.').join('/')}/meta`;
-          return fetch(metaPath, {
-            credentials: 'include',
-          })
-            .then((res) =>
-              res.status === 200
-                ? res
-                  .json()
-                  .then((meta) => ({ path, meta }))
-                  .catch((err) => {
-                    console.error(err);
-                    return Promise.resolve(undefined);
+        return paths.map((path) => {
+          let fetched = false
+          let meta: any = {}
+          return {
+            path,
+            meta: () => {
+              if (!fetched) {
+                const observableResponse = getBackendSrv().fetch({ url: `${this.url}/historyapi/signalk/v1/api/vessels/self/${path.split('.').join('/')}/meta` })
+                lastValueFrom(observableResponse)
+                  .then(response => {
+                    fetched = true
+                    meta = response.data
                   })
-                : Promise.resolve({ path, meta: {} })
-            )
-            .catch((err) => {
-              console.error(err);
-              return Promise.resolve(undefined);
-            });
-        });
-        return Promise.all(validPathPromises).then((pathOrUndefinedA: Array<PathWithMeta | void>): PathWithMeta[] =>
-          pathOrUndefinedA.flatMap((f) => (!!f ? [f] : []))
-        );
+              } return meta
+            }
+          }
+        })
       })
       .catch((err) => {
         console.error(err);
@@ -276,16 +272,15 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
     if (context) {
       queryParams.context = context;
     }
-    const url: URL = new URL(`http://${this.hostname}/signalk/v1/history/paths`);
-    Object.keys(queryParams).forEach((key) => url.searchParams.append(key, queryParams[key]));
-    return url.toString();
+    return urlWithQueryParams(`${this.url}/historyapi/signalk/v1/history/paths?`, queryParams)
   }
 
   fetchContexts(range: TimeRange) {
-    return fetch(this.getContextsUrl(range || undefined), {
-      credentials: 'include',
-    })
-      .then((res) => res.json())
+    const observableResponse = getBackendSrv().fetch({ url: this.getContextsUrl(range || undefined) })
+    return lastValueFrom(observableResponse)
+      .then(response => {
+        return response.data as unknown as string[]
+      })
       .then((contexts) => contexts.map(toLabelValue));
   }
 
@@ -293,13 +288,17 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
     if (!range) {
       throw new Error('Valid range required for fetching contexts');
     }
-    const queryParams: { [k: string]: string } = { from: range.from.toISOString(), to: range.to.toISOString() };
-    const url: URL = new URL(`http${this.ssl ? 's' : ''}://${this.hostname}/signalk/v1/history/contexts`);
-    Object.keys(queryParams).forEach((key) => url.searchParams.append(key, queryParams[key]));
-    return url.toString();
+    return urlWithQueryParams(`${this.url}/historyapi/signalk/v1/history/contexts?`, {
+      from: range.from.toISOString(), to: range.to.toISOString()
+    })
   }
 }
 
+const urlWithQueryParams = (base: string, queryParams: { [k: string]: string }) => {
+  let url = base
+  Object.keys(queryParams).forEach((key) => (url += `${key}=${queryParams[key]}&`))
+  return url
+}
 export const toLabelValue = (s: string) => ({ label: s, value: s });
 
 const getDollarsource = (update: any) => {
@@ -346,9 +345,9 @@ const pathValueHandler = (
 type Conversion = (v: number | null) => (number | null)
 
 const getConversion = (target: SignalKQuery): Conversion => {
-  console.log(target)
   if (target.unitConversion) {
-    return getConverter(target.unitConversion)
+    const converter = getConverter(target.unitConversion)
+    return (x) => x === null ? null : converter(x)
   }
   const multiplier = target.multiplier || 1
   return (x) => x === null ? null : multiplier * x

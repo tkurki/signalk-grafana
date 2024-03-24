@@ -19,6 +19,8 @@ datasources:
   isDefault: true
   jsonData:
     hostname: host.docker.internal:3003
+    ssl: false
+    useAuth: false
   secureJsonData:
   version: 1
   readOnly: false
@@ -39,6 +41,8 @@ datasources:
   isDefault: false
   jsonData:
     hostname: demo.signalk.org
+    ssl: true
+    useAuth: false
   secureJsonData:
   version: 1
   readOnly: false

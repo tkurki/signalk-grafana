@@ -37,8 +37,8 @@ export interface QueryListener {
 const NO_OP_HANDLER = (pathValue: PathValue, update: any) => undefined;
 
 export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOptions> {
-  hostname: string;
   ssl: boolean;
+  useAuth: boolean;
   listeners: QueryListener[] = [];
   pathValueHandlers: { [key: string]: PathValueHandler } = {};
   idleInterval?: number;
@@ -48,8 +48,8 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
 
   constructor(instanceSettings: DataSourceInstanceSettings<SignalKDataSourceOptions>) {
     super(instanceSettings);
-    this.hostname = instanceSettings.jsonData.hostname || '';
     this.ssl = instanceSettings.jsonData.ssl || false;
+    this.useAuth = instanceSettings.jsonData.useAuth || false;
     this.url = instanceSettings.url;
   }
 
@@ -83,8 +83,12 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
     };
   }
 
+  getProxyName() {
+    return `${this.ssl ? 's' : ''}${this.useAuth ? '' : 'noauth'}historyapi`
+  }
+
   getWebsocketUrl() {
-    return `ws${window.location.protocol === 'https' ? 's' : ''}://${window.location.host}${this.url}/historyapi/signalk/v1/stream`
+    return `ws${window.location.protocol === 'https' ? 's' : ''}://${window.location.host}${this.url}/${this.getProxyName()}/signalk/v1/stream`
   }
 
   query(options: DataQueryRequest<SignalKQuery>): Observable<DataQueryResponse> {
@@ -158,7 +162,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
   }
 
   getHistoryUrlBase() {
-    return `${this.url}/historyapi/signalk/v1/history/values?`;
+    return `${this.url}/${this.getProxyName()}/signalk/v1/history/values?`;
   }
 
   getHistoryUrl(options: DataQueryRequest<SignalKQuery>) {

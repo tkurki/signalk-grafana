@@ -16,6 +16,7 @@ export interface SignalKQuery extends DataQuery {
 export interface SignalKDataSourceOptions extends DataSourceJsonData {
   hostname?: string;
   ssl?: boolean;
+  useAuth: boolean;
 }
 
 export interface SecureSignalKDataSourceOptions {

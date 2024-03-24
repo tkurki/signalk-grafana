@@ -14,6 +14,24 @@
           "content": "Bearer {{ .SecureJsonData.token }}"
         }
       ]
+    },
+    {
+      "path": "shistoryapi",
+      "url": "https://{{ .JsonData.hostname }}/",
+      "headers": [
+        {
+          "name": "Authorization",
+          "content": "Bearer {{ .SecureJsonData.token }}"
+        }
+      ]
+    },
+    {
+      "path": "noauthhistoryapi",
+      "url": "http://{{ .JsonData.hostname }}/"
+    },
+    {
+      "path": "snoauthhistoryapi",
+      "url": "https://{{ .JsonData.hostname }}/"
     }
   ],
   "info": {

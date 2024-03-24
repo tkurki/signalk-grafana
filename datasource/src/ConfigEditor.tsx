@@ -38,6 +38,15 @@ export class ConfigEditor extends PureComponent<Props, State> {
     });
   };
 
+  onUseAuthChange = (event: any) => {
+    const { onOptionsChange, options } = this.props;
+    const jsonData = {
+      ...options.jsonData,
+      useAuth: !!event.target.checked,
+    };
+    onOptionsChange({ ...options, jsonData });
+  }
+
 
   render() {
     const { options } = this.props;
@@ -59,13 +68,18 @@ export class ConfigEditor extends PureComponent<Props, State> {
             value={jsonData.hostname || ''}
             placeholder="Signal K server hostname/ip address"
           />
+          <Switch
+            label='Use Authentication'
+            onChange={this.onUseAuthChange}
+            checked={!!jsonData.useAuth}
+          />
           <FormField
             label="Authentication Token"
             labelWidth={10}
             inputWidth={20}
             onChange={this.onTokenChange}
             value={secureJsonData?.token ?? ''}
-            placeholder="Signal K server hostname/ip address"
+            placeholder="Access token"
           />
         </div>
       </div>

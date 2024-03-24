@@ -184,6 +184,15 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
   async testDatasource() {
     const wsPromise = new Promise((resolve, reject) => {
       const ws = new WebSocket(`${this.getWebsocketUrl()}?subscribe=none`);
+      setTimeout(() => {
+        try {
+          ws.close()
+        } catch (e) {
+          console.error(e)
+        }
+        //if resolved already has no effect
+        reject("WebSocket timeout")
+      }, 30 * 1000)
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);

@@ -34,13 +34,11 @@ export interface QueryListener {
   onQuery: (options: DataQueryRequest<SignalKQuery>) => void;
 }
 
-const NO_OP_HANDLER = (pathValue: PathValue, update: any) => undefined;
-
 export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOptions> {
   ssl: boolean;
   useAuth: boolean;
   listeners: QueryListener[] = [];
-  pathValueHandlers: { [key: string]: PathValueHandler } = {};
+  pathValueHandlers: PathValueHandler[] = [];
   idleInterval?: number;
 
   ws?: ReconnectingWebsocket;
@@ -75,7 +73,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
         msg.updates.forEach((update: any) => {
           if (update.values) {
             update.values.forEach((pathValue: any) => {
-              Object.values(this.pathValueHandlers).forEach((handler) => handler(pathValue, update));
+              this.pathValueHandlers.forEach((handler) => handler(pathValue, update))
             });
           }
         });
@@ -113,24 +111,24 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
         });
       };
 
-      const pathValueHandlerId = `${options.panelId}-${options.dashboardId}-${options.targets[0].refId}`;
-
-      this.pathValueHandlers[pathValueHandlerId] = rangeIsUptoNow(options.rangeRaw)
-        ? pathValueHandler(options.targets[0], dataframe, onDataInserted)
-        : NO_OP_HANDLER;
+      this.pathValueHandlers = !rangeIsUptoNow(options.rangeRaw) ?
+        []
+        : options.targets.map((target, i) =>
+          pathValueHandler(target, dataframe, i, onDataInserted)
+        )
 
       if (rangeIsUptoNow(options.rangeRaw) && options.targets.length > 0) {
         this.ensureWsIsOpen();
 
         //if there are no updates advance the time with timer
         this.idleInterval = setInterval(() => {
-          if (Date.now() - lastStreamingValueTimestamp > 1000) {
+          if (Date.now() - lastStreamingValueTimestamp > options.intervalMs) {
             subscriber.next({
               data: [dataframe],
-              key: options.targets[0].refId,
+              state: LoadingState.Streaming
             });
           }
-        }, 1000) as unknown as number;
+        }, options.intervalMs) as unknown as number;
       }
 
       this.doQuery(options, dataframe, subscriber);
@@ -337,6 +335,7 @@ const rangeIsUptoNow = (rangeRaw?: RawTimeRange) => rangeRaw && rangeRaw.to === 
 const pathValueHandler = (
   query: SignalKQuery,
   data: DualDataFrame,
+  fieldIndex: number,
   onDataInserted: () => void
 ) => {
   const { dollarsource, path } = query
@@ -349,7 +348,7 @@ const pathValueHandler = (
   return (pathValue: PathValue, update: any) => {
     if (pathValue.path === path) {
       if (sourceMatcher(update)) {
-        data.addStreamingData(conversion(pathValue.value));
+        data.addStreamingData(fieldIndex, conversion(pathValue.value));
         onDataInserted();
       }
     }

@@ -60,15 +60,16 @@ export class DualDataFrame implements DataFrame {
   }
 
   addHistoryData(ts: Date, values: Array<number | null>) {
-    // console.log([ts, ...values])
     this.length = this.mutableDataFrame.length + this.circularDataFrame.length;
     this.mutableDataFrame.appendRow([ts, ...values]);
     this.myVectors.forEach((vector) => (vector.length = this.length));
   }
 
-  addStreamingData(value: number | null) {
-    this.circularDataFrame.fields[0].values.add(Date.now());
-    this.circularDataFrame.fields[1].values.add(value);
+  addStreamingData(fieldIndex: number, value: number | null) {
+    const row: (number | null)[]  = new Array(this.circularDataFrame.fields.length)
+    row[0] = Date.now();
+    row[fieldIndex +1 ] = value
+    this.circularDataFrame.appendRow(row)
     this.length = this.mutableDataFrame.length + this.circularDataFrame.length;
     this.myVectors.forEach((vector) => (vector.length = this.length));
   }

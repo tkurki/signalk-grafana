@@ -117,7 +117,7 @@ const dataToMapParams = memoize((data: any): MapParams => {
   let i;
   const positions = data.series[0].fields[1].values;
   const timestamps = data.series[0].fields[0].values;
-  const dataValues = data.series.length > 1 ? data.series[1].fields[1].values : undefined;
+  const dataValues = data.series[0].fields.length > 2 ? data.series[0].fields[2].values : undefined;
   let minLat = 90;
   let maxLat = -90;
   let minLng = 180;

@@ -364,12 +364,15 @@ const pathValueHandler = (
 
 type Conversion = (v: number | null) => (number | null)
 
-const getConversion = (target: SignalKQuery): Conversion => {
-  if (target.unitConversion) {
-    const converter = getConverter(target.unitConversion)
+const getConversion = (seriesQuery: SignalKQuery): Conversion => {
+  if (seriesQuery.path === 'navigation.position') {
+    return (x) => x
+  }
+  if (seriesQuery.unitConversion) {
+    const converter = getConverter(seriesQuery.unitConversion)
     return (x) => x === null ? null : converter(x)
   }
-  const multiplier = target.multiplier || 1
+  const multiplier = seriesQuery.multiplier || 1
   return (x) => x === null ? null : multiplier * x
 }
 

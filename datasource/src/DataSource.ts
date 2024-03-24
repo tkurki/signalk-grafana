@@ -62,6 +62,13 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
     }
   }
 
+  closeWs() {
+    if (this.ws) {
+      this.ws.close()
+      this.ws = undefined
+    }
+  }
+
   ensureWsIsOpen() {
     if (this.ws) {
       return;
@@ -133,7 +140,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
 
       this.doQuery(options, dataframe, subscriber);
     });
-    return result;
+    return onFirstLastSubscribers(result, () => this.ensureWsIsOpen(), () => this.closeWs());
   }
 
   async doQuery(options: DataQueryRequest<SignalKQuery>, dataframe: DualDataFrame, subscriber: Subscriber<DataQueryResponse>) {
@@ -364,4 +371,23 @@ const getConversion = (target: SignalKQuery): Conversion => {
   }
   const multiplier = target.multiplier || 1
   return (x) => x === null ? null : multiplier * x
+}
+
+
+function onFirstLastSubscribers<T>(sourceObservable: Observable<T>, onFirstSubscriber: () => void, onLastUnsubscribe: () => void) {
+  let subscriptionCount = 0
+  return new Observable((subscriber: Subscriber<T>) => {
+    if (subscriptionCount === 0) {
+      onFirstSubscriber()
+    }
+    subscriptionCount++
+    const subscription = sourceObservable.subscribe(subscriber);
+    return () => {
+      subscriptionCount--;
+      subscription.unsubscribe();
+      if (subscriptionCount === 0 ) {
+        onLastUnsubscribe();
+      }
+    }
+  });
 }

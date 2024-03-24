@@ -66,7 +66,7 @@ export class DualDataFrame implements DataFrame {
   }
 
   addStreamingData(fieldIndex: number, value: number | null) {
-    const row: (number | null)[]  = new Array(this.circularDataFrame.fields.length)
+    const row = new Array<number | null>(this.circularDataFrame.fields.length)
     row[0] = Date.now();
     row[fieldIndex +1 ] = value
     this.circularDataFrame.appendRow(row)

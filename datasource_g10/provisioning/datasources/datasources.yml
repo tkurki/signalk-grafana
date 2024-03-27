@@ -8,3 +8,7 @@ datasources:
     orgId: 1
     version: 1
     editable: true
+    jsonData:
+      hostname: host.docker.internal:3003
+      ssl: false
+      useAuth: false

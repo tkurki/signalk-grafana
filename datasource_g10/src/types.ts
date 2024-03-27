@@ -1,25 +1,25 @@
 import { DataSourceJsonData } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
+import { UnitConversion } from 'conversions';
 
-export interface MyQuery extends DataQuery {
-  queryText?: string;
-  constant: number;
+export interface SignalKQuery extends DataQuery {
+  context: string;
+  path: string;
+  multiplier: number;
+  unitConversion?: UnitConversion;
+  aggregate: string;
+  dollarsource?: string;
 }
-
-export const DEFAULT_QUERY: Partial<MyQuery> = {
-  constant: 6.5,
-};
 
 /**
  * These are options configured for each DataSource instance
  */
-export interface MyDataSourceOptions extends DataSourceJsonData {
-  path?: string;
+export interface SignalKDataSourceOptions extends DataSourceJsonData {
+  hostname?: string;
+  ssl?: boolean;
+  useAuth: boolean;
 }
 
-/**
- * Value that is used in the backend, but never sent over HTTP to the frontend
- */
-export interface MySecureJsonData {
-  apiKey?: string;
+export interface SecureSignalKDataSourceOptions {
+  token?: string
 }

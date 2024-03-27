@@ -1,13 +1,45 @@
 {
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
   "type": "datasource",
-  "name": "Signalk-Datasource",
+  "name": "Signal K",
   "id": "signalk-signalk-datasource",
   "metrics": true,
+  "streaming": true,
+  "routes": [
+    {
+      "path": "historyapi",
+      "url": "http://{{ .JsonData.hostname }}/",
+      "headers": [
+        {
+          "name": "Authorization",
+          "content": "Bearer {{ .SecureJsonData.token }}"
+        }
+      ]
+    },
+    {
+      "path": "shistoryapi",
+      "url": "https://{{ .JsonData.hostname }}/",
+      "headers": [
+        {
+          "name": "Authorization",
+          "content": "Bearer {{ .SecureJsonData.token }}"
+        }
+      ]
+    },
+    {
+      "path": "noauthhistoryapi",
+      "url": "http://{{ .JsonData.hostname }}/"
+    },
+    {
+      "path": "snoauthhistoryapi",
+      "url": "https://{{ .JsonData.hostname }}/"
+    }
+  ],
   "info": {
-    "description": "",
+    "description": "Signal K datasource (streaming & historical data)",
     "author": {
-      "name": "Signalk"
+      "name": "teppo.kurki@ıki.fi",
+      "url": "http://signalk.org/"
     },
     "keywords": ["datasource"],
     "logos": {

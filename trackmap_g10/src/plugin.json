@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
   "type": "panel",
   "name": "Signalk-Trackmap",
-  "id": "signalk-signalktrackmap-panel",
+  "id": "signalk-trackmap",
   "info": {
     "keywords": ["panel"],
     "description": "Map for tracks from signal k history api",

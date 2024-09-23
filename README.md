@@ -25,11 +25,3 @@ demo.signalk.org does not support the history API, so you get only streaming upd
 ## Details
 
 The plugins are so far unsigned and unpublished, so you need to tell Grafana that you want to run them anyway with `GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=signalk-datasource,signalk-trackmap`.
-
-The datasource runs in your browser, so you can use the same hostname that you use to access your SK server as the hostname in the datasource configuration.
-
-## Missing functionality
-
-- authentication support
-- accessing the datasource via Grafana server
-

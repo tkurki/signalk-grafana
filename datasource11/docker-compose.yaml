@@ -10,7 +10,7 @@ services:
         grafana_version: ${GRAFANA_VERSION:-11.2.0}
         development: ${DEVELOPMENT:-false}
     ports:
-      - 3000:3000/tcp
+      - 3001:3000/tcp
     volumes:
       - ./dist:/var/lib/grafana/plugins/signalk-signalk-datasource
       - ./provisioning:/etc/grafana/provisioning

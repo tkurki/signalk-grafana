@@ -3,7 +3,7 @@ apiVersion: 1
 deleteDatasources:
 
 datasources:
-- name: localhost
+- name: docker host 3003
   id: 1
   orgId: 1
   type: signalk-datasource

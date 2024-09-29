@@ -110,8 +110,6 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
     const result = new Observable<DataQueryResponse>((subscriber) => {
       let lastStreamingValueTimestamp = 0;
 
-      // const dataframe = new DualDataFrame(options.targets.map(
-      //   target => `${target.path}:${target.aggregate}`), 1000);
       const dataframe = new CircularDataFrame({
         append: 'tail',
         capacity: 1000,

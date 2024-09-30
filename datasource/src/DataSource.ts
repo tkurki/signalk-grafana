@@ -1,8 +1,10 @@
 import {
+  CircularDataFrame,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
+  FieldType,
   LoadingState,
   RawTimeRange,
   TimeRange,
@@ -11,7 +13,6 @@ import {
 import { SignalKQuery, SignalKDataSourceOptions } from './types';
 import { Observable, Subscriber, lastValueFrom } from 'rxjs';
 import ReconnectingWebsocket from './reconnecting-websocket';
-import { DualDataFrame } from 'DualDataframe';
 import { PathWithMeta } from 'QueryEditor';
 import { getConverter } from 'conversions';
 import { getBackendSrv } from '@grafana/runtime';
@@ -64,8 +65,8 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
 
   closeWs() {
     if (this.ws) {
-      this.ws.close()
-      this.ws = undefined
+      this.ws.close();
+      this.ws = undefined;
     }
   }
 
@@ -80,7 +81,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
         msg.updates.forEach((update: any) => {
           if (update.values) {
             update.values.forEach((pathValue: any) => {
-              this.pathValueHandlers.forEach((handler) => handler(pathValue, update))
+              this.pathValueHandlers.forEach((handler) => handler(pathValue, update));
             });
           }
         });
@@ -89,11 +90,13 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
   }
 
   getProxyName() {
-    return `${this.ssl ? 's' : ''}${this.useAuth ? '' : 'noauth'}historyapi`
+    return `${this.ssl ? 's' : ''}${this.useAuth ? '' : 'noauth'}historyapi`;
   }
 
   getWebsocketUrl() {
-    return `ws${window.location.protocol === 'https' ? 's' : ''}://${window.location.host}${this.url}/${this.getProxyName()}/signalk/v1/stream`
+    return `ws${window.location.protocol === 'https' ? 's' : ''}://${window.location.host}${
+      this.url
+    }/${this.getProxyName()}/signalk/v1/stream`;
   }
 
   query(options: DataQueryRequest<SignalKQuery>): Observable<DataQueryResponse> {
@@ -107,8 +110,15 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
     const result = new Observable<DataQueryResponse>((subscriber) => {
       let lastStreamingValueTimestamp = 0;
 
-      const dataframe = new DualDataFrame(options.targets.map(
-        target => `${target.path}:${target.aggregate}`), 1000);
+      const dataframe = new CircularDataFrame({
+        append: 'tail',
+        capacity: 1000,
+      });
+      dataframe.addField({ name: 'time', type: FieldType.time });
+      options.targets.map((target) => {
+        dataframe.addField({ name: `${target.path}:${target.aggregate}`, type: FieldType.number });
+      });
+
       const onDataInserted = () => {
         lastStreamingValueTimestamp = Date.now();
         subscriber.next({
@@ -118,11 +128,9 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
         });
       };
 
-      this.pathValueHandlers = !rangeIsUptoNow(options.rangeRaw) ?
-        []
-        : options.targets.map((target, i) =>
-          pathValueHandler(target, dataframe, i, onDataInserted)
-        )
+      this.pathValueHandlers = !rangeIsUptoNow(options.rangeRaw)
+        ? []
+        : options.targets.map((target, i) => pathValueHandler(target, dataframe, i, onDataInserted));
 
       if (rangeIsUptoNow(options.rangeRaw) && options.targets.length > 0) {
         this.ensureWsIsOpen();
@@ -132,7 +140,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
           if (Date.now() - lastStreamingValueTimestamp > options.intervalMs) {
             subscriber.next({
               data: [dataframe],
-              state: LoadingState.Streaming
+              state: LoadingState.Streaming,
             });
           }
         }, options.intervalMs) as unknown as number;
@@ -140,28 +148,39 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
 
       this.doQuery(options, dataframe, subscriber);
     });
-    return onFirstLastSubscribers(result, () => this.ensureWsIsOpen(), () => this.closeWs());
+    return onFirstLastSubscribers(
+      result,
+      () => this.ensureWsIsOpen(),
+      () => this.closeWs()
+    );
   }
 
-  async doQuery(options: DataQueryRequest<SignalKQuery>, dataframe: DualDataFrame, subscriber: Subscriber<DataQueryResponse>) {
+  async doQuery(
+    options: DataQueryRequest<SignalKQuery>,
+    dataframe: CircularDataFrame,
+    subscriber: Subscriber<DataQueryResponse>
+  ) {
     //https://community.grafana.com/t/how-to-migrate-from-backendsrv-datasourcerequest-to-backendsrv-fetch/58770
     const observableResponse = getBackendSrv().fetch({
-      url: this.getHistoryUrl(options)
-    })
-    lastValueFrom(observableResponse).then(response => {
-      return response.data as unknown as HistoryResult
-    })
+      url: this.getHistoryUrl(options),
+    });
+    lastValueFrom(observableResponse)
+      .then((response) => {
+        return response.data as unknown as HistoryResult;
+      })
       .then((result: HistoryResult) => {
-        const seriesConversions = options.targets.map(getConversion)
+        const seriesConversions = options.targets.map(getConversion);
         if (result) {
           result.data.forEach((row: number[]) => {
+            const rowToInsert = row.slice(1).map((value, i) => seriesConversions[i](value));
             const ts = new Date(row[0]);
-            dataframe.addHistoryData(ts, row.slice(1).map((value, i) => seriesConversions[i](value)));
+            (rowToInsert as any[]).unshift(ts);
+            dataframe.appendRow(rowToInsert);
           });
           subscriber.next({
             data: [dataframe],
-            key: options.targets[0].refId
-          })
+            key: options.targets[0].refId,
+          });
         }
       });
   }
@@ -183,7 +202,7 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
       to: options.range.to.toISOString(),
       resolution: (options.intervalMs / 1000).toString(),
     };
-    return urlWithQueryParams(this.getHistoryUrlBase(), queryParams)
+    return urlWithQueryParams(this.getHistoryUrlBase(), queryParams);
   }
 
   async testDatasource() {
@@ -191,13 +210,13 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
       const ws = new WebSocket(`${this.getWebsocketUrl()}?subscribe=none`);
       setTimeout(() => {
         try {
-          ws.close()
+          ws.close();
         } catch (e) {
-          console.error(e)
+          console.error(e);
         }
         //if resolved already has no effect
-        reject("WebSocket timeout")
-      }, 30 * 1000)
+        reject('WebSocket timeout');
+      }, 10 * 1000);
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
@@ -228,17 +247,16 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
       };
     });
 
-    const observableResponse = getBackendSrv().fetch({ url: this.getHistoryUrlBase() })
-    const apiPromise = lastValueFrom(observableResponse)
-      .then((response) => {
-        if (response.status === 400) {
-          return {
-            status: 'success',
-            message: 'Success',
-          };
-        }
-        throw new Error(`History endpoint returned ${response.status}`);
-      });
+    const observableResponse = getBackendSrv().fetch({ url: this.getHistoryUrlBase() });
+    const apiPromise = lastValueFrom(observableResponse).then((response) => {
+      if (response.status === 400) {
+        return {
+          status: 'success',
+          message: 'Success',
+        };
+      }
+      throw new Error(`History endpoint returned ${response.status}`);
+    });
 
     return Promise.all([wsPromise, apiPromise].map((p: Promise<any>) => p.catch((e: Error) => e))).then((statuses) => {
       if (statuses.some((status) => status.status === 'success')) {
@@ -252,30 +270,31 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
   }
 
   fetchPaths(range: TimeRange, context: string): Promise<PathWithMeta[]> {
-    const observableResponse = getBackendSrv().fetch({ url: this.getPathsUrl(range, context) })
+    const observableResponse = getBackendSrv().fetch({ url: this.getPathsUrl(range, context) });
     return lastValueFrom(observableResponse)
-      .then(response => {
-        return response.data as unknown as string[]
+      .then((response) => {
+        return response.data as unknown as string[];
       })
       .then((paths: string[]) => {
         return paths.map((path) => {
-          let fetched = false
-          let _meta: any
+          let fetched = false;
+          let _meta: any;
           return {
             path,
             meta: () => {
               if (!fetched) {
-                const observableResponse = getBackendSrv().fetch({ url: `${this.url}/historyapi/signalk/v1/api/vessels/self/${path.split('.').join('/')}/meta` })
-                _meta = lastValueFrom(observableResponse)
-                  .then(response => {
-                    fetched = true
-                    return response.data
-                  })
+                const observableResponse = getBackendSrv().fetch({
+                  url: `${this.url}/historyapi/signalk/v1/api/vessels/self/${path.split('.').join('/')}/meta`,
+                });
+                _meta = lastValueFrom(observableResponse).then((response) => {
+                  fetched = true;
+                  return response.data;
+                });
               }
-              return _meta
-            }
-          }
-        })
+              return _meta;
+            },
+          };
+        });
       })
       .catch((err) => {
         console.error(err);
@@ -291,14 +310,14 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
     if (context) {
       queryParams.context = context;
     }
-    return urlWithQueryParams(`${this.url}/historyapi/signalk/v1/history/paths?`, queryParams)
+    return urlWithQueryParams(`${this.url}/historyapi/signalk/v1/history/paths?`, queryParams);
   }
 
   fetchContexts(range: TimeRange) {
-    const observableResponse = getBackendSrv().fetch({ url: this.getContextsUrl(range || undefined) })
+    const observableResponse = getBackendSrv().fetch({ url: this.getContextsUrl(range || undefined) });
     return lastValueFrom(observableResponse)
-      .then(response => {
-        return response.data as unknown as string[]
+      .then((response) => {
+        return response.data as unknown as string[];
       })
       .then((contexts) => contexts.map(toLabelValue));
   }
@@ -308,16 +327,17 @@ export class DataSource extends DataSourceApi<SignalKQuery, SignalKDataSourceOpt
       throw new Error('Valid range required for fetching contexts');
     }
     return urlWithQueryParams(`${this.url}/historyapi/signalk/v1/history/contexts?`, {
-      from: range.from.toISOString(), to: range.to.toISOString()
-    })
+      from: range.from.toISOString(),
+      to: range.to.toISOString(),
+    });
   }
 }
 
 const urlWithQueryParams = (base: string, queryParams: { [k: string]: string }) => {
-  let url = base
-  Object.keys(queryParams).forEach((key) => (url += `${key}=${queryParams[key]}&`))
-  return url
-}
+  let url = base;
+  Object.keys(queryParams).forEach((key) => (url += `${key}=${queryParams[key]}&`));
+  return url;
+};
 export const toLabelValue = (s: string) => ({ label: s, value: s });
 
 const getDollarsource = (update: any) => {
@@ -341,12 +361,12 @@ const rangeIsUptoNow = (rangeRaw?: RawTimeRange) => rangeRaw && rangeRaw.to === 
 
 const pathValueHandler = (
   query: SignalKQuery,
-  data: DualDataFrame,
+  data: CircularDataFrame,
   fieldIndex: number,
   onDataInserted: () => void
 ) => {
-  const { dollarsource, path } = query
-  const conversion = getConversion(query)
+  const { dollarsource, path } = query;
+  const conversion = getConversion(query);
   let sourceMatcher: (update: any) => boolean = () => true;
   if (dollarsource && dollarsource !== '') {
     sourceMatcher = (update: any) => getDollarsource(update) === dollarsource;
@@ -355,42 +375,48 @@ const pathValueHandler = (
   return (pathValue: PathValue, update: any) => {
     if (pathValue.path === path) {
       if (sourceMatcher(update)) {
-        data.addStreamingData(fieldIndex, conversion(pathValue.value));
+        const row = new Array<number | null>(data.fields.length);
+        row[0] = Date.now();
+        row[fieldIndex + 1] = conversion(pathValue.value);
+        data.appendRow(row);
         onDataInserted();
       }
     }
   };
 };
 
-type Conversion = (v: number | null) => (number | null)
+type Conversion = (v: number | null) => number | null;
 
 const getConversion = (seriesQuery: SignalKQuery): Conversion => {
   if (seriesQuery.path === 'navigation.position') {
-    return (x) => x
+    return (x) => x;
   }
   if (seriesQuery.unitConversion) {
-    const converter = getConverter(seriesQuery.unitConversion)
-    return (x) => x === null ? null : converter(x)
+    const converter = getConverter(seriesQuery.unitConversion);
+    return (x) => (x === null ? null : converter(x));
   }
-  const multiplier = seriesQuery.multiplier || 1
-  return (x) => x === null ? null : multiplier * x
-}
+  const multiplier = seriesQuery.multiplier || 1;
+  return (x) => (x === null ? null : multiplier * x);
+};
 
-
-function onFirstLastSubscribers<T>(sourceObservable: Observable<T>, onFirstSubscriber: () => void, onLastUnsubscribe: () => void) {
-  let subscriptionCount = 0
+function onFirstLastSubscribers<T>(
+  sourceObservable: Observable<T>,
+  onFirstSubscriber: () => void,
+  onLastUnsubscribe: () => void
+) {
+  let subscriptionCount = 0;
   return new Observable((subscriber: Subscriber<T>) => {
     if (subscriptionCount === 0) {
-      onFirstSubscriber()
+      onFirstSubscriber();
     }
-    subscriptionCount++
+    subscriptionCount++;
     const subscription = sourceObservable.subscribe(subscriber);
     return () => {
       subscriptionCount--;
       subscription.unsubscribe();
-      if (subscriptionCount === 0 ) {
+      if (subscriptionCount === 0) {
         onLastUnsubscribe();
       }
-    }
+    };
   });
 }

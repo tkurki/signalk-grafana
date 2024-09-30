@@ -154,10 +154,7 @@ export class QueryEditor extends PureComponent<Props, State> {
             />
           </InlineField>
           <InlineField labelWidth={14} label="$source">
-            {/* https://github.com/DefinitelyTyped/DefinitelyTyped/discussions/69006 */}
             <Input
-              onPointerEnterCapture={() => { }}
-              onPointerLeaveCapture={() => { }}
               width={12}
               name={'$source'}
               id={'$source'}
@@ -206,10 +203,7 @@ export class QueryEditor extends PureComponent<Props, State> {
             disabled={!!unitConversion}
             tooltip={!!unitConversion ? 'Disable unit conversion to enter custom multiplier' : undefined}
           >
-            {/* https://github.com/DefinitelyTyped/DefinitelyTyped/discussions/69006 */}
             <Input
-              onPointerEnterCapture={() => { }}
-              onPointerLeaveCapture={() => { }}
               label="Multiply by"
               value={!unitConversion ? (typeof multiplier === 'number' ? multiplier : 1) : ''}
               width={10}

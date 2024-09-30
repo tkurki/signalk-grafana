@@ -61,7 +61,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             checked={!!jsonData.ssl}
           />
           <FormField
-            label="Server address"
+            label="Server host:port"
             labelWidth={10}
             inputWidth={20}
             onChange={this.onHostnameChange}

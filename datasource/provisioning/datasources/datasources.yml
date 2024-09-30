@@ -1,0 +1,14 @@
+apiVersion: 1
+
+datasources:
+  - name: 'Signal K datasource'
+    type: 'signalk-datasource'
+    access: proxy
+    isDefault: false
+    orgId: 1
+    version: 1
+    editable: true
+    jsonData:
+      hostname: "host.docker.internal:3000"
+    secureJsonData:
+      apiKey: 'api-key'

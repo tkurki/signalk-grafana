@@ -31,8 +31,8 @@ jobs:
           npm run build
 
       - name: Docker meta
-        id: docker_meta
-        uses: crazy-max/ghaction-docker-meta@v3
+        id: meta
+        uses: docker/metadata-action@v5
         with:
           images: tkurki/signalk-grafana
           tag-sha: true # add git short SHA as Docker tag
@@ -46,10 +46,10 @@ jobs:
           username: tkurki
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm/v7,linux/arm64
           push: true
-          tags: ${{ steps.docker_meta.outputs.tags }}
+          tags: ${{ steps.meta.outputs.tags }}

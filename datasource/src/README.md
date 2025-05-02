@@ -1,49 +1,29 @@
-<!-- This README file is going to be the one displayed on the Grafana.com website for your plugin. Uncomment and replace the content here before publishing.
+# SignalK-Datasource
 
-Remove any remaining comments before publishing as these may be displayed on Grafana.com -->
+![Dynamic JSON Badge](https://img.shields.io/badge/dynamic/json?logo=grafana&query=$.version&url=https://grafana.com/api/plugins/signalk-datasource&label=Marketplace&prefix=v&color=F47A20)
+![License](https://img.shields.io/github/license/tkurki/signalk-grafana)
 
-# Signalk-Datasource
+## Overview 
 
-<!-- To help maximize the impact of your README and improve usability for users, we propose the following loose structure:
+This is a datasource for using Signal K data over
+- streaming WebSocket connection for realtime data
+- the History HTTP API
 
-**BEFORE YOU BEGIN**
-- Ensure all links are absolute URLs so that they will work when the README is displayed within Grafana and Grafana.com
-- Be inspired ✨
-  - [grafana-polystat-panel](https://github.com/grafana/grafana-polystat-panel)
-  - [volkovlabs-variable-panel](https://github.com/volkovlabs/volkovlabs-variable-panel)
+For streaming data you will need a Signal K server providing access to the data. To test the functionality you can connect to https://demo.signalk.org. Streaming data opens a connection to the Signal K server that update as new data is received when you have Grafana open. With just streaming data you can have an updating dashboard, but you can not scroll back in time and all updates happening when the Grafana window is not active won't be shown.
 
-**ADD SOME BADGES**
+For access to history data you will need a database where the data is stored and access to the data via Signal K server. This is provided by the [signalk-to-influxdb2 plugin](https://github.com/tkurki/signalk-to-influxdb2). The plugin stores the data in an InfluxDb v2 database and implements a History API that the datasource accesses.
 
-Badges convey useful information at a glance for users whether in the Catalog or viewing the source code. You can use the generator on [Shields.io](https://shields.io/badges/dynamic-json-badge) together with the Grafana.com API
-to create dynamic badges that update automatically when you publish a new version to the marketplace.
+Streaming WebSocket data and History API work transparently together so that when you open Grafana with timespan set relative to "now" the datasource will fill the data for the chosen time span from the History API and start streaming real time updates as they are received.
 
-- For the logo field use 'grafana'.
-- Examples (label: query)
-  - Downloads: $.downloads
-  - Catalog Version: $.version
-  - Grafana Dependency: $.grafanaDependency
-  - Signature Type: $.versionSignatureType
+The main benefits of using this datasource over connecting directly to a database are:
+- no need to understand how to query the database - instead you can just pick Signal K paths and sources to choose the data you want
+- the datasource is aware of the Signal schema and metadata: it knows what each path's unit is and provides out of the box conversions to other units
+- it provides full access to your data, combining the realtime updates with full access to history
 
-Full example: ![Dynamic JSON Badge](https://img.shields.io/badge/dynamic/json?logo=grafana&query=$.version&url=https://grafana.com/api/plugins/grafana-polystat-panel&label=Marketplace&prefix=v&color=F47A20)
+![SignalK Datasource Screenshot](https://github.com/user-attachments/assets/155f2cd6-ff20-429d-b841-bdc187acbeff)
 
-Consider other [badges](https://shields.io/badges) as you feel appropriate for your project.
+![SignalK Datasource Graph Configuration Path picking](https://github.com/user-attachments/assets/23018162-33b5-400a-9c6a-ec1eee0d6b6f)
 
-## Overview / Introduction
-Provide one or more paragraphs as an introduction to your plugin to help users understand why they should use it.
+![SignalK Datasource Graph Configuration](https://github.com/user-attachments/assets/ba3ad93c-07e7-49e5-b8d4-898326f6f07f)
 
-Consider including screenshots:
-- in [plugin.json](https://grafana.com/developers/plugin-tools/reference/plugin-json#info) include them as relative links.
-- in the README ensure they are absolute URLs.
-
-## Requirements
-List any requirements or dependencies they may need to run the plugin.
-
-## Getting Started
-Provide a quick start on how to configure and use the plugin.
-
-## Documentation
-If your project has dedicated documentation available for users, provide links here. For help in following Grafana's style recommendations for technical documentation, refer to our [Writer's Toolkit](https://grafana.com/docs/writers-toolkit/).
-
-## Contributing
-Do you want folks to contribute to the plugin or provide feedback through specific means? If so, tell them how!
--->
+![SignalK Datasource Conversion Configuration](https://github.com/user-attachments/assets/f1463e0a-484e-4ad2-9354-4f49fcab222e)

@@ -35,23 +35,31 @@
     }
   ],
   "info": {
-    "description": "Signal K datasource (streaming & historical data)",
+    "description": "Signal K datasource for streaming realtime data over WebSocket and querying historical data via History API. The plugin is designed to work with the Signal K server and signalk-to-influxdb2 plugin.",
     "author": {
-      "name": "teppo.kurki@ıki.fi",
-      "url": "http://signalk.org/"
+      "name": "teppo.kurki@iki.fi"
     },
-    "keywords": ["datasource"],
+    "keywords": ["datasource","signalk", "history", "streaming", "websocket"],
     "logos": {
       "small": "img/logo.svg",
       "large": "img/logo.svg"
     },
     "links": [
       {
-        "name": "Website",
+        "name": "Github",
         "url": "https://github.com/tkurki/signalk-grafana"
+      },
+      {
+        "name": "Sponsor",
+        "url": "https://github.com/sponsors/tkurki"
       }
     ],
-    "screenshots": [],
+    "screenshots": [
+      "./img/datasource_config.png",
+      "./img/paths.png",
+      "./img/queryeditor1.png",
+      "./img/conversion.png"
+    ],
     "version": "%VERSION%",
     "updated": "%TODAY%"
   },

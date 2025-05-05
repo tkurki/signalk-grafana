@@ -55,10 +55,22 @@
       }
     ],
     "screenshots": [
-      "./img/datasource_config.png",
-      "./img/paths.png",
-      "./img/queryeditor1.png",
-      "./img/conversion.png"
+      {
+        "path": "img/datasource_config.png",
+        "name": "Data Source Configuration"
+      },
+      {
+        "path": "img/paths.png",
+        "name": "Pick data by path"
+      },
+      {
+        "path": "img/queryeditor1.png",
+        "name": "Query Editor"
+      },
+      {
+        "path": "img/conversion.png",
+        "name": "Schema/unit aware conversions"
+      }
     ],
     "version": "%VERSION%",
     "updated": "%TODAY%"

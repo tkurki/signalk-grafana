@@ -1,0 +1,25 @@
+{
+  "configuration": {
+    "outputDailyLog": false,
+    "influxes": [
+      {
+        "url": "http://influxdb:8086",
+        "token": "signalk_token",
+        "org": "signalk_org",
+        "bucket": "signalk_bucket",
+        "onlySelf": true,
+        "filteringRules": [],
+        "ignoredPaths": [],
+        "ignoredSources": [],
+        "useSKTimestamp": false,
+        "resolution": 0,
+        "writeOptions": {
+          "defaultTags": {},
+          "headers": {},
+          "writeRetrySkipped": {}
+        }
+      }
+    ]
+  },
+  "enabled": true
+}

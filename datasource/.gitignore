@@ -37,3 +37,6 @@ ci/
 .idea
 
 .eslintcache
+docker-compose-config/data/
+*.zip
+signalk-datasource/
